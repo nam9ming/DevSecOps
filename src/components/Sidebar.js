@@ -1,12 +1,12 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
-  Activity, GitBranch, Zap, Server, Shield,
+  GitBranch, Zap, Server, Shield,
   Bug, Settings
 } from 'lucide-react';
 
 const menuItems = [
-  { label: '대시보드', path: '/', icon: <Activity size={18} /> },
+  // { label: '대시보드', path: '/', icon: <Activity size={18} /> }, // 삭제됨
   { label: '저장소', path: '/repositories', icon: <GitBranch size={18} /> },
   { label: '파이프라인', path: '/pipelines', icon: <Zap size={18} /> },
   { label: '배포', path: '/deployments', icon: <Server size={18} /> },
@@ -18,10 +18,12 @@ const menuItems = [
 const Sidebar = () => {
   return (
     <div className="w-60 h-screen bg-white border-r">
-      <div className="flex items-center px-6 py-4 font-bold text-lg gap-2">
-        <Shield className="text-blue-600" />
-        <span className="text-gray-800">DevSecOps</span>
-      </div>
+      {/* 상단 로고 클릭 시 /로 이동 */}
+      <Link to="/" className="flex items-center px-6 py-4 gap-2">
+        <Shield className="text-blue-600" size={24} />
+        <span className="text-gray-800 text-2xl font-extrabold">DevSecOps</span>
+      </Link>
+      
       <nav className="px-2">
         {menuItems.map((item) => (
           <NavLink
