@@ -3,6 +3,8 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import ServicePage from './pages/ServicePage';
 import EnvPage from './pages/EnvPage';
+import EnvironmentExecutions from './pages/EnvironmentExecutions';
+import ExecutionDetail from './pages/ExecutionDetail';
 import Repositories from './pages/Repositories';
 import Pipelines from './pages/Pipelines';
 import Deployments from './pages/Deployments';
@@ -19,6 +21,8 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="/service/:serviceId" element={<ServicePage />} />
           <Route path="/service/:serviceId/env/:envId" element={<EnvPage />} />
+          <Route path="/service/:serviceName/:env" element={<EnvironmentExecutions />} />
+          <Route path="/service/:serviceName/:env/execution/:execId" element={<ExecutionDetail />} /> 
           <Route path="repositories" element={<Repositories />} />
           <Route path="pipelines" element={<Pipelines />} />
           <Route path="deployments" element={<Deployments />} />
