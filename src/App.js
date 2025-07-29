@@ -28,7 +28,7 @@ function App() {
           <Route path="deployments" element={<Deployments />} />
           <Route path="security" element={<Security />} />
           <Route path="testing" element={<Testing />} />
-          <Route path="setting" element={<Settings />} />
+          <Route path="settings" element={<Settings />} />
           {/* 추가 페이지들 */}
         </Route>
       </Routes>
