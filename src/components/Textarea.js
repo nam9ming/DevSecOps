@@ -17,6 +17,7 @@ const Textarea = ( {jobName} ) => {
   const [mode, setMode] = useState('default');
   const [code, setCode] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [result, setResult] = useState({status: '', message: ''});
   const lineRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -51,7 +52,7 @@ const Textarea = ( {jobName} ) => {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(getRes.data, 'text/xml');
     console.log(xmlDoc);
-
+    
     // 2. script 태그 내용 가져옴(Pipeline 스크립트)
     const scriptNode = xmlDoc.getElementsByTagName('script')[0];
     scriptNode.textContent = newCode;
@@ -68,10 +69,10 @@ const Textarea = ( {jobName} ) => {
       }
     });
 
-    alert('Jenkins 파이프라인 저장 완료.');
+    setResult({status: 'success', message: 'Saved'});
   } catch (error) {
       console.error('저장 실패:', error);
-      alert('Jenkins 파이프라인 저장 실패: ' + error.message);
+      setResult({status: 'error', message: 'Failed, ' + error.message});
     }
   };
 
@@ -106,7 +107,7 @@ const Textarea = ( {jobName} ) => {
           <option value="customize">customize</option>
         </select>
       </div>
-
+        
       {/* 에디터 영역 */}
       <div className="flex border border-gray-300 rounded-md overflow-hidden text-sm font-mono h-[400px]">
         {/* 줄 번호 */}
@@ -169,6 +170,9 @@ const Textarea = ( {jobName} ) => {
         >
           Save
         </button>
+        <div role='alert' className={`${result.status === 'success'? 'text-green-600' :
+                                        result.status === 'error' ? 'text-red-600' : ''
+        }`}>{ result.message }</div>
       </div>
     </div>
   );
