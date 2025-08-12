@@ -6,7 +6,7 @@ import { authApi } from "../context/axios";
 
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:4000/api";
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -343,3 +343,4 @@ const Login = () => {
 };
 
 export default Login;
+
