@@ -8,6 +8,7 @@ import ExecutionDetail from './pages/ExecutionDetail';
 import Repositories from './pages/Repositories';
 import Pipelines from './pages/Pipelines';
 import Deployments from './pages/Deployments';
+import DeploymentDetail from './pages/DeploymentDetail';
 import Security from './pages/Security';
 import Testing from './pages/Testing';
 import Settings from './pages/Settings';
@@ -25,7 +26,8 @@ function App() {
           <Route path="/service/:serviceName/:env/execution/:execId" element={<ExecutionDetail />} /> 
           <Route path="repositories" element={<Repositories />} />
           <Route path="pipelines" element={<Pipelines />} />
-          <Route path="deployments" element={<Deployments />} />
+          <Route path="/deployments" element={<Deployments />} />
+          <Route path="/deployments/:serviceId/" element={<DeploymentDetail />} />
           <Route path="security" element={<Security />} />
           <Route path="testing" element={<Testing />} />
           <Route path="settings" element={<Settings />} />
