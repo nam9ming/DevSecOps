@@ -29,7 +29,7 @@ const Settings = () => {
         console.log(SettingsForm);
 
         try {
-            const response = await axios.post("http://localhost:5000/setting/inter", SettingsForm);
+            const response = await axios.post("http://localhost:4000/setting/inter", SettingsForm);
             console.log("서버 응답:", response.data);
         } catch (error) {
             console.error("전송 오류:", error);
