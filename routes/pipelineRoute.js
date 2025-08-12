@@ -30,7 +30,7 @@ router.post('/config', saveConfigXml = async (req, res) => {
         await axios.post(`${JENKINS_URL}/job/${jobName}/config.xml`, xmlData, {
             auth: AUTH,
             headers: {
-            'Content-Type': 'application/xml',
+            'Content-Type': 'application/xml; charset=utf-8',
             [crumbField]: crumb
             }
         });
