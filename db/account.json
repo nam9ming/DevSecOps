@@ -1,0 +1,20 @@
+{
+  "users": [
+    {
+      "id": "1754999189600",
+      "username": "",
+      "password": "$2b$10$tHaJyXoQIxxLNZBTwHngvOkYBGf8uQy37xy1KcYs4/MGPZCD0Vw.2"
+    },
+    {
+      "id": "1754999296566",
+      "username": "123@123",
+      "password": "$2b$10$B7Wf2f5ju00eY9Haalou3OWQVT87p5w75njo2tjJzf1zM4IvwKfsO"
+    },
+    {
+      "id": "1754999680737",
+      "username": "3@3",
+      "password": "$2b$10$WRpg1reGNAorIMQE/dU82.l8WmYtD0PUb6QUmKgsqsgPoRSK.fyh6"
+    }
+  ],
+  "refreshTokens": []
+}
