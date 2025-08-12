@@ -10,7 +10,6 @@ const jx = axios.create({
   timeout: 10000,
 });
 
-// color → status 매핑
 const mapStatus = (color = "") => {
   const c = String(color).toLowerCase();
   if (c.includes("anime")) return "Building";
@@ -23,35 +22,75 @@ const mapStatus = (color = "") => {
   return "Pending";
 };
 
-// env 토큰 판별
-const pickEnv = (name) => {
-  const m = name.match(/-(dev|stage|prod)$/i);
-  return m ? m[1].toLowerCase().replace("stg", "stage") : null;
+const mapBuildStatus = (b = {}) => {
+  if (b.building) return "Building";
+  const r = String(b.result || "").toUpperCase();
+  if (r === "SUCCESS") return "Success";
+  if (r === "FAILURE") return "Failed";
+  if (r === "UNSTABLE") return "Unstable";
+  if (r === "ABORTED") return "Aborted";
+  return "Pending";
 };
 
-// /jobcatalog: 목록 한 번에(color 포함) → 빠르고 가벼움
 router.get("/jobcatalog", async (req, res) => {
   try {
-    // 필요한 필드만
     const { data } = await jx.get("/api/json", {
       params: { tree: "jobs[name,color]" },
     });
 
     const serviceMap = {};
-    for (const j of data.jobs ?? []) {
-      const env = pickEnv(j.name);
-      if (!env) continue;
+    const envs = ["dev", "stage", "prod"];
 
-      // 서비스명은 env 토큰 제거
-      const service = j.name.replace(/-(dev|stage|prod)$/i, "");
-      if (!serviceMap[service]) {
-        serviceMap[service] = {
-          name: service.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          statuses: {},
-        };
-      }
-      serviceMap[service].statuses[env] = mapStatus(j.color);
-    }
+    // 잡별 상세 조회로 ENV 파라미터별 최신 상태 계산
+    await Promise.all(
+      (data.jobs ?? []).map(async (j) => {
+        const service = j.name;
+
+        if (!serviceMap[service]) {
+          serviceMap[service] = {
+            name: service
+              .replace(/-/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase()),
+            statuses: {},
+          };
+        }
+
+        // 서비스의 dev/stage/prod 네임스페이스별 상태 조회
+        try {
+          const detail = await jx.get(`/job/${encodeURIComponent(service)}/api/json`, {
+            params: {
+              tree:
+                "builds[number,result,building,timestamp,actions[parameters[name,value]]]",
+            },
+          });
+
+          const builds = detail.data?.builds || [];
+          const sts = {};
+
+          for (const env of envs) {
+            const filtered = builds
+              .filter((b) => {
+                const params = (b.actions || []).flatMap((a) => a.parameters || []);
+                const p = params.find((p) => p && p.name === "ENV");
+                return p && String(p.value).toLowerCase() === env;
+              })
+              .sort((a, b) => b.number - a.number);
+
+            sts[env] = filtered.length ? mapBuildStatus(filtered[0]) : "Pending";
+          }
+
+          serviceMap[service].statuses = sts;
+        } catch (_) {
+          // 상세 조회 실패 시 color 기반 동일 상태로 폴백
+          const st = mapStatus(j.color);
+          serviceMap[service].statuses = {
+            dev: st,
+            stage: st,
+            prod: st,
+          };
+        }
+      })
+    );
 
     res.json(Object.values(serviceMap));
   } catch (err) {
@@ -83,7 +122,6 @@ router.post("/deployments", async (req, res) => {
 
     const resp = await jx.post(path, null, { params: params || {}, headers: { ...crumb } });
 
-    // Jenkins는 201/302로 queue item Location 제공
     const queueUrl = resp.headers?.location || null;
     res.status(200).json({ message: "빌드 요청됨", jobName, queueUrl });
   } catch (err) {
@@ -94,21 +132,55 @@ router.post("/deployments", async (req, res) => {
 
 router.get("/lastdeploy", async (req, res) => {
   try {
+    const job = (req.query.job || "").toString();
+    const env = (req.query.env || "").toString().toLowerCase();
+
+    // ✅ 신규 방식: 단일 잡 + ENV 파라미터 필터
+    if (job && env) {
+      const { data } = await jx.get(`/job/${encodeURIComponent(job)}/api/json`, {
+        params: {
+          // 빌드 목록 + 파라미터 포함
+          tree: "builds[number,timestamp,result,building,actions[parameters[name,value]]]",
+        },
+      });
+
+      const builds = data.builds || [];
+      // ENV=env 인 빌드만 추출, 최신순
+      const filtered = builds
+        .filter((b) => {
+          const params = (b.actions || []).flatMap((a) => a.parameters || []);
+          const p = params.find((p) => p && p.name === "ENV");
+          return p && String(p.value).toLowerCase() === env;
+        })
+        .sort((a, b) => b.number - a.number);
+
+      if (!filtered.length) return res.json({ lastDeploy: null });
+
+      const latest = filtered[0];
+      const formatted = new Date(latest.timestamp).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      return res.json({
+        lastDeploy: formatted,
+        buildNumber: latest.number,
+        result: (latest.result || "UNKNOWN"),
+      });
+    }
+
     const jobName = req.query.service;
-    const kind = (req.query.kind || "lastCompletedBuild").toString(); // or lastSuccessfulBuild
+    const kind = (req.query.kind || "lastCompletedBuild").toString();
+    if (!jobName) return res.status(400).json({ error: "job/env 또는 service 파라미터가 필요합니다." });
 
     const { data } = await jx.get(`/job/${encodeURIComponent(jobName)}/${kind}/api/json`);
     if (!data?.timestamp) return res.json({ lastDeploy: null });
 
     const date = new Date(data.timestamp);
     const formatted = date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
-    res.json({ lastDeploy: formatted, buildNumber: data.number, result: data.result || 'UNKNOWN'});
+    res.json({ lastDeploy: formatted, buildNumber: data.number, result: data.result || "UNKNOWN" });
   } catch (err) {
-    // 빌드 전 404 대비
     if (err.response?.status === 404) return res.json({ lastDeploy: null });
     console.error("🔴 배포 시간 불러오기 실패:", err.message);
     res.status(500).json({ error: "배포 시간 조회 실패" });
   }
 });
+
 
 module.exports = router;
