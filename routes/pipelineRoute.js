@@ -26,6 +26,16 @@ const pickEnv = (name) => {
   return m ? m[1].toLowerCase().replace('stg', 'stage') : null;
 };
 
+// CSRF crumb (미사용 환경 대비)
+const getCrumb = async () => {
+  try {
+    const { data } = await jx.get('/crumbIssuer/api/json');
+    return { [data.crumbRequestField]: data.crumb };
+  } catch {
+    return {};
+  }
+};
+
 /** ---------- 신규/추천 라우트 ---------- **/
 
 // Job 목록 요약(서비스 단위, env별 상태)
@@ -87,7 +97,7 @@ router.get('/:jobName/build/:execId', async (req, res) => {
   }
 });
 
-// config.xml 읽기/저장
+// config.xml 읽기
 router.get('/config', async (req, res) => {
   try {
     const jobName = req.query.job;
@@ -97,24 +107,19 @@ router.get('/config', async (req, res) => {
     });
     res.send(xml.data);
   } catch (err) {
-    res.status(404).send('Jenkins config 조회 실패: ' + err.message);
+    res.status(500).send('Jenkins config 조회 실패: ' + err.message);
   }
 });
 
+// config.xml 저장
 router.post('/config', async (req, res) => {
   try {
     const jobName = req.query.job;
     if (!jobName) return res.status(400).send('job 파라미터 필요');
 
-    // crumb (CSRF) 처리
-    let crumbHeaders = {};
-    try {
-      const { data } = await jx.get('/crumbIssuer/api/json');
-      crumbHeaders = { [data.crumbRequestField]: data.crumb };
-    } catch (_) {}
-
+    const crumb = await getCrumb();
     await jx.post(`/job/${encodeURIComponent(jobName)}/config.xml`, req.body, {
-      headers: { 'Content-Type': 'application/xml', ...crumbHeaders },
+      headers: { 'Content-Type': 'application/xml; charset=utf-8', ...crumb },
     });
     res.send('Jenkins config 저장 성공');
   } catch (err) {
@@ -124,11 +129,11 @@ router.post('/config', async (req, res) => {
 
 /** ---------- 레거시 호환 라우트(기존 프런트 유지용) ---------- **/
 
-// 기존: GET /api/jenkins/services  (현재 구현과 결과 포맷 동일)
+// 기존: GET /api/jenkins/services  (간단 목록)
 router.get('/services', async (_req, res) => {
   try {
     const { data } = await jx.get('/api/json', { params: { tree: 'jobs[name,color]' } });
-    const services = (data.jobs || []).map(j => ({ name: j.name, status: j.color }));
+    const services = (data.jobs || []).map((j) => ({ name: j.name, status: j.color }));
     res.json({ services });
   } catch (e) {
     res.status(500).json({ error: e.message });
