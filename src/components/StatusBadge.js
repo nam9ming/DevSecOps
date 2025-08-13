@@ -1,20 +1,17 @@
-
-import React from 'react';
-
+// src/components/StatusBadge.js
 const StatusBadge = ({ status }) => {
-  const statusConfig = {
-    success: { color: 'bg-green-500', text: 'text-green-100', label: 'Success' },
-    building: { color: 'bg-blue-500', text: 'text-blue-100', label: 'Building' },
-    failed: { color: 'bg-red-500', text: 'text-red-100', label: 'Failed' },
-    pending: { color: 'bg-yellow-500', text: 'text-yellow-100', label: 'Pending' }
+  const colors = {
+    success: "bg-green-500",
+    failed: "bg-red-500",
+    unstable: "bg-yellow-500",
+    building: "bg-blue-500 animate-pulse",
+    pending: "bg-gray-400",
+    disabled: "bg-gray-400"
   };
-
-  const config = statusConfig[status];
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color} ${config.text}`}>
-      {config.label}
+    <span className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${colors[status] || "bg-gray-400"}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 };
-
 export default StatusBadge;
