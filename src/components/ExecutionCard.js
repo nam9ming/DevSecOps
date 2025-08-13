@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ExecutionCard = ({ data, serviceName, env }) => {
+const ExecutionCard = ({ data, serviceId, env }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/service/${serviceName}/${env}/execution/${data.id}`);
+    navigate(`/service/${serviceId}/${env}/execution/${data.id}`);
   };
 
   return (
