@@ -50,22 +50,7 @@ function AppRoutes() {
     return (
         <Router>
             <Routes>
-                <Route
-                    path="/login"
-                    element={
-                        <PublicRoute>
-                            <Login />
-                        </PublicRoute>
-                    }
-                />
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            <Layout />
-                        </ProtectedRoute>
-                    }
-                >
+                <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="/service/:serviceId" element={<ServicePage />} />
                     <Route path="/service/:serviceId/env/:envId" element={<EnvPage />} />
