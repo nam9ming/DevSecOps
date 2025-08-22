@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
 import { authApi } from "../context/axios";
-
-import axios from "axios";
 
 const API_URL = "http://localhost:4000/api";
 
@@ -23,7 +20,6 @@ const Login = () => {
     const [message, setMessage] = useState("");
 
     const navigate = useNavigate();
-    const { login } = useAuth();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -343,4 +339,3 @@ const Login = () => {
 };
 
 export default Login;
-
