@@ -14,7 +14,17 @@
       "id": "1754999680737",
       "username": "3@3",
       "password": "$2b$10$WRpg1reGNAorIMQE/dU82.l8WmYtD0PUb6QUmKgsqsgPoRSK.fyh6"
+    },
+    {
+      "id": "1756960565156",
+      "username": "test@test.com",
+      "password": "$2b$10$hoxKkWM2kQSfAa4xy6vyr.UTEiZ.i.rG1wDaT7xz80kFQZuhhxdTu"
     }
   ],
-  "refreshTokens": []
+  "refreshTokens": [
+    {
+      "id": "test@test.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTY5NjA1NjUxNTYiLCJpYXQiOjE3NTcwNjM5NjcsImV4cCI6MTc1NzY2ODc2N30.GBmQ9AJYyJ9iS3213t7IQMMOzS9uXhSSTtsuYWrbjjM"
+    }
+  ]
 }
