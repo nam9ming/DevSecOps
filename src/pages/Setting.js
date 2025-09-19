@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Settings as SettingsIcon, User, Shield, Database, Bell, Palette, Globe, Save, RefreshCw, Trash2, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import { Settings as SettingsIcon, Database, Save, RefreshCw, Trash2, Eye } from "lucide-react";
+// import { Shield, Bell, Palette, CheckCircle, AlertCircle } from "lucide-react";
 
 const Settings = () => {
     const [SettingsForm, setSettingsForm] = useState({
@@ -11,10 +12,10 @@ const Settings = () => {
         KubernetesConfig: "",
     });
 
-    const { JenkinsUrl, JenkinsApiToken, GitHubApiToken, DockerRegistryURL, KubernetesConfig } = SettingsForm;
+    // const { JenkinsUrl, JenkinsApiToken, GitHubApiToken, DockerRegistryURL, KubernetesConfig } = SettingsForm;
 
-    const [response, setResponse] = useState("");
-    const [Error, setError] = useState("");
+    // const [response, setResponse] = useState("");
+    // const [Error, setError] = useState("");
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -29,34 +30,36 @@ const Settings = () => {
         console.log(SettingsForm);
 
         try {
-            const response = await axios.post("http://localhost:4000/setting/inter", SettingsForm);
-            console.log("서버 응답:", response.data);
+            const response = await axios.post("http://localhost:4000/api/setting/inter", SettingsForm);
+            console.log("서버 응답:", response);
         } catch (error) {
             console.error("전송 오류:", error);
         }
     };
 
     const [activeTab, setActiveTab] = useState("general");
-    const [notifications, setNotifications] = useState({
-        email: true,
-        slack: false,
-        webhook: true,
-        buildAlerts: true,
-        securityAlerts: true,
-        deploymentAlerts: false,
-    });
-    const [security, setSecurity] = useState({
-        twoFactor: false,
-        sessionTimeout: 30,
-        passwordPolicy: "strong",
-        ipWhitelist: "",
-    });
-    const [appearance, setAppearance] = useState({
-        theme: "light",
-        language: "ko",
-        timezone: "Asia/Seoul",
-        dateFormat: "YYYY-MM-DD",
-    });
+
+    // const [notifications, setNotifications] = useState({
+    //     email: true,
+    //     slack: false,
+    //     webhook: true,
+    //     buildAlerts: true,
+    //     securityAlerts: true,
+    //     deploymentAlerts: false,
+    // });
+    // const [security, setSecurity] = useState({
+    //     twoFactor: false,
+    //     sessionTimeout: 30,
+    //     passwordPolicy: "strong",
+    //     ipWhitelist: "",
+    // });
+    // const [appearance, setAppearance] = useState({
+    //     theme: "light",
+    //     language: "ko",
+    //     timezone: "Asia/Seoul",
+    //     dateFormat: "YYYY-MM-DD",
+    // });
+
     const [integrations, setIntegrations] = useState({
         jenkins: true,
         github: true,
@@ -64,27 +67,27 @@ const Settings = () => {
         kubernetes: true,
     });
 
-    const handleNotificationChange = (key) => {
-        console.log("알림 변경:", key);
-        setNotifications((prev) => ({
-            ...prev,
-            [key]: !prev[key],
-        }));
-    };
+    // const handleNotificationChange = (key) => {
+    //     console.log("알림 변경:", key);
+    //     setNotifications((prev) => ({
+    //         ...prev,
+    //         [key]: !prev[key],
+    //     }));
+    // };
 
-    const handleSecurityChange = (key, value) => {
-        setSecurity((prev) => ({
-            ...prev,
-            [key]: value,
-        }));
-    };
+    // const handleSecurityChange = (key, value) => {
+    //     setSecurity((prev) => ({
+    //         ...prev,
+    //         [key]: value,
+    //     }));
+    // };
 
-    const handleAppearanceChange = (key, value) => {
-        setAppearance((prev) => ({
-            ...prev,
-            [key]: value,
-        }));
-    };
+    // const handleAppearanceChange = (key, value) => {
+    //     setAppearance((prev) => ({
+    //         ...prev,
+    //         [key]: value,
+    //     }));
+    // };
 
     const handleIntegrationChange = (key) => {
         setIntegrations((prev) => ({
@@ -95,9 +98,9 @@ const Settings = () => {
 
     const tabs = [
         { id: "general", name: "일반", icon: SettingsIcon },
-        { id: "notifications", name: "알림", icon: Bell },
-        { id: "security", name: "보안", icon: Shield },
-        { id: "appearance", name: "외관", icon: Palette },
+        // { id: "notifications", name: "알림", icon: Bell },
+        // { id: "security", name: "보안", icon: Shield },
+        // { id: "appearance", name: "외관", icon: Palette },
         { id: "integrations", name: "연동", icon: Database },
     ];
 
@@ -163,208 +166,208 @@ const Settings = () => {
         </div>
     );
 
-    const renderNotificationSettings = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">알림 채널</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    {Object.entries(notifications).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between">
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-900 capitalize">
-                                    {key === "email" && "이메일 알림"}
-                                    {key === "slack" && "Slack 알림"}
-                                    {key === "webhook" && "Webhook 알림"}
-                                    {key === "buildAlerts" && "빌드 알림"}
-                                    {key === "securityAlerts" && "보안 알림"}
-                                    {key === "deploymentAlerts" && "배포 알림"}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                    {key === "email" && "이메일로 알림을 받습니다"}
-                                    {key === "slack" && "Slack 채널로 알림을 보냅니다"}
-                                    {key === "webhook" && "외부 시스템으로 webhook을 전송합니다"}
-                                    {key === "buildAlerts" && "빌드 상태 변경 시 알림을 받습니다"}
-                                    {key === "securityAlerts" && "보안 이슈 발생 시 알림을 받습니다"}
-                                    {key === "deploymentAlerts" && "배포 완료 시 알림을 받습니다"}
-                                </p>
-                            </div>
-                            <button onClick={() => handleNotificationChange(key)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${value ? "bg-blue-500" : "bg-gray-200"}`}>
-                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${value ? "translate-x-6" : "translate-x-1"}`} />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
+    // const renderNotificationSettings = () => (
+    //     <div className="space-y-6">
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">알림 채널</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 {Object.entries(notifications).map(([key, value]) => (
+    //                     <div key={key} className="flex items-center justify-between">
+    //                         <div>
+    //                             <h4 className="text-sm font-medium text-gray-900 capitalize">
+    //                                 {key === "email" && "이메일 알림"}
+    //                                 {key === "slack" && "Slack 알림"}
+    //                                 {key === "webhook" && "Webhook 알림"}
+    //                                 {key === "buildAlerts" && "빌드 알림"}
+    //                                 {key === "securityAlerts" && "보안 알림"}
+    //                                 {key === "deploymentAlerts" && "배포 알림"}
+    //                             </h4>
+    //                             <p className="text-sm text-gray-500">
+    //                                 {key === "email" && "이메일로 알림을 받습니다"}
+    //                                 {key === "slack" && "Slack 채널로 알림을 보냅니다"}
+    //                                 {key === "webhook" && "외부 시스템으로 webhook을 전송합니다"}
+    //                                 {key === "buildAlerts" && "빌드 상태 변경 시 알림을 받습니다"}
+    //                                 {key === "securityAlerts" && "보안 이슈 발생 시 알림을 받습니다"}
+    //                                 {key === "deploymentAlerts" && "배포 완료 시 알림을 받습니다"}
+    //                             </p>
+    //                         </div>
+    //                         <button onClick={() => handleNotificationChange(key)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${value ? "bg-blue-500" : "bg-gray-200"}`}>
+    //                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${value ? "translate-x-6" : "translate-x-1"}`} />
+    //                         </button>
+    //                     </div>
+    //                 ))}
+    //             </div>
+    //         </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">알림 설정</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">이메일 주소</label>
-                        <input type="email" defaultValue="admin@devsecops.com" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Slack Webhook URL</label>
-                        <input type="url" defaultValue="https://hooks.slack.com/services/..." className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">알림 빈도</label>
-                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option>즉시</option>
-                            <option>5분마다</option>
-                            <option>15분마다</option>
-                            <option>1시간마다</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">알림 설정</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">이메일 주소</label>
+    //                     <input type="email" defaultValue="admin@devsecops.com" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">Slack Webhook URL</label>
+    //                     <input type="url" defaultValue="https://hooks.slack.com/services/..." className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">알림 빈도</label>
+    //                     <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option>즉시</option>
+    //                         <option>5분마다</option>
+    //                         <option>15분마다</option>
+    //                         <option>1시간마다</option>
+    //                     </select>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
 
-    const renderSecuritySettings = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">인증 및 보안</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">2단계 인증</h4>
-                            <p className="text-sm text-gray-500">Google Authenticator를 사용한 2단계 인증</p>
-                        </div>
-                        <button onClick={() => handleSecurityChange("twoFactor", !security.twoFactor)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${security.twoFactor ? "bg-blue-500" : "bg-gray-200"}`}>
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${security.twoFactor ? "translate-x-6" : "translate-x-1"}`} />
-                        </button>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">세션 타임아웃 (분)</label>
-                        <input type="number" value={security.sessionTimeout} onChange={(e) => handleSecurityChange("sessionTimeout", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 정책</label>
-                        <select value={security.passwordPolicy} onChange={(e) => handleSecurityChange("passwordPolicy", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="weak">약함 (최소 6자)</option>
-                            <option value="medium">보통 (최소 8자, 영문+숫자)</option>
-                            <option value="strong">강함 (최소 10자, 영문+숫자+특수문자)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">IP 화이트리스트</label>
-                        <textarea
-                            value={security.ipWhitelist}
-                            onChange={(e) => handleSecurityChange("ipWhitelist", e.target.value)}
-                            placeholder="허용할 IP 주소를 한 줄에 하나씩 입력하세요"
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                </div>
-            </div>
+    // const renderSecuritySettings = () => (
+    //     <div className="space-y-6">
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">인증 및 보안</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">2단계 인증</h4>
+    //                         <p className="text-sm text-gray-500">Google Authenticator를 사용한 2단계 인증</p>
+    //                     </div>
+    //                     <button onClick={() => handleSecurityChange("twoFactor", !security.twoFactor)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${security.twoFactor ? "bg-blue-500" : "bg-gray-200"}`}>
+    //                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${security.twoFactor ? "translate-x-6" : "translate-x-1"}`} />
+    //                     </button>
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">세션 타임아웃 (분)</label>
+    //                     <input type="number" value={security.sessionTimeout} onChange={(e) => handleSecurityChange("sessionTimeout", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 정책</label>
+    //                     <select value={security.passwordPolicy} onChange={(e) => handleSecurityChange("passwordPolicy", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option value="weak">약함 (최소 6자)</option>
+    //                         <option value="medium">보통 (최소 8자, 영문+숫자)</option>
+    //                         <option value="strong">강함 (최소 10자, 영문+숫자+특수문자)</option>
+    //                     </select>
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">IP 화이트리스트</label>
+    //                     <textarea
+    //                         value={security.ipWhitelist}
+    //                         onChange={(e) => handleSecurityChange("ipWhitelist", e.target.value)}
+    //                         placeholder="허용할 IP 주소를 한 줄에 하나씩 입력하세요"
+    //                         rows={3}
+    //                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    //                     />
+    //                 </div>
+    //             </div>
+    //         </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">보안 감사</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <div>
-                                <h4 className="text-sm font-medium text-green-900">보안 스캔 완료</h4>
-                                <p className="text-sm text-green-700">마지막 스캔: 2시간 전</p>
-                            </div>
-                        </div>
-                        <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">스캔 실행</button>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <AlertCircle className="w-5 h-5 text-yellow-500" />
-                            <div>
-                                <h4 className="text-sm font-medium text-yellow-900">업데이트 필요</h4>
-                                <p className="text-sm text-yellow-700">3개의 보안 패치가 대기 중</p>
-                            </div>
-                        </div>
-                        <button className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">업데이트</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">보안 감사</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+    //                     <div className="flex items-center gap-3">
+    //                         <CheckCircle className="w-5 h-5 text-green-500" />
+    //                         <div>
+    //                             <h4 className="text-sm font-medium text-green-900">보안 스캔 완료</h4>
+    //                             <p className="text-sm text-green-700">마지막 스캔: 2시간 전</p>
+    //                         </div>
+    //                     </div>
+    //                     <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">스캔 실행</button>
+    //                 </div>
+    //                 <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+    //                     <div className="flex items-center gap-3">
+    //                         <AlertCircle className="w-5 h-5 text-yellow-500" />
+    //                         <div>
+    //                             <h4 className="text-sm font-medium text-yellow-900">업데이트 필요</h4>
+    //                             <p className="text-sm text-yellow-700">3개의 보안 패치가 대기 중</p>
+    //                         </div>
+    //                     </div>
+    //                     <button className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">업데이트</button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
 
-    const renderAppearanceSettings = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">테마 및 언어</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">테마</label>
-                        <select value={appearance.theme} onChange={(e) => handleAppearanceChange("theme", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="light">라이트 모드</option>
-                            <option value="dark">다크 모드</option>
-                            <option value="auto">시스템 설정 따름</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">언어</label>
-                        <select value={appearance.language} onChange={(e) => handleAppearanceChange("language", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="ko">한국어</option>
-                            <option value="en">English</option>
-                            <option value="ja">日本語</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">시간대</label>
-                        <select value={appearance.timezone} onChange={(e) => handleAppearanceChange("timezone", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Asia/Seoul">Asia/Seoul (UTC+9)</option>
-                            <option value="UTC">UTC (UTC+0)</option>
-                            <option value="America/New_York">America/New_York (UTC-5)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">날짜 형식</label>
-                        <select value={appearance.dateFormat} onChange={(e) => handleAppearanceChange("dateFormat", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    // const renderAppearanceSettings = () => (
+    //     <div className="space-y-6">
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">테마 및 언어</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">테마</label>
+    //                     <select value={appearance.theme} onChange={(e) => handleAppearanceChange("theme", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option value="light">라이트 모드</option>
+    //                         <option value="dark">다크 모드</option>
+    //                         <option value="auto">시스템 설정 따름</option>
+    //                     </select>
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">언어</label>
+    //                     <select value={appearance.language} onChange={(e) => handleAppearanceChange("language", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option value="ko">한국어</option>
+    //                         <option value="en">English</option>
+    //                         <option value="ja">日本語</option>
+    //                     </select>
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">시간대</label>
+    //                     <select value={appearance.timezone} onChange={(e) => handleAppearanceChange("timezone", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option value="Asia/Seoul">Asia/Seoul (UTC+9)</option>
+    //                         <option value="UTC">UTC (UTC+0)</option>
+    //                         <option value="America/New_York">America/New_York (UTC-5)</option>
+    //                     </select>
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">날짜 형식</label>
+    //                     <select value={appearance.dateFormat} onChange={(e) => handleAppearanceChange("dateFormat", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    //                         <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+    //                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+    //                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+    //                     </select>
+    //                 </div>
+    //             </div>
+    //         </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">대시보드 설정</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">실시간 업데이트</h4>
-                            <p className="text-sm text-gray-500">대시보드 데이터를 실시간으로 업데이트</p>
-                        </div>
-                        <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-500">
-                            <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">애니메이션 효과</h4>
-                            <p className="text-sm text-gray-500">차트 및 카드 애니메이션 표시</p>
-                        </div>
-                        <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200">
-                            <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">대시보드 설정</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">실시간 업데이트</h4>
+    //                         <p className="text-sm text-gray-500">대시보드 데이터를 실시간으로 업데이트</p>
+    //                     </div>
+    //                     <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-500">
+    //                         <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
+    //                     </button>
+    //                 </div>
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">애니메이션 효과</h4>
+    //                         <p className="text-sm text-gray-500">차트 및 카드 애니메이션 표시</p>
+    //                     </div>
+    //                     <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200">
+    //                         <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
 
     const renderIntegrationSettings = () => (
         <div className="space-y-6">
@@ -465,12 +468,12 @@ const Settings = () => {
         switch (activeTab) {
             case "general":
                 return renderGeneralSettings();
-            case "notifications":
-                return renderNotificationSettings();
-            case "security":
-                return renderSecuritySettings();
-            case "appearance":
-                return renderAppearanceSettings();
+            // case "notifications":
+            //     return renderNotificationSettings();
+            // case "security":
+            //     return renderSecuritySettings();
+            // case "appearance":
+            //     return renderAppearanceSettings();
             case "integrations":
                 return renderIntegrationSettings();
             default:

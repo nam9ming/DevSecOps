@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { authApi } from "../context/axios";
+import { useAuth } from "../context/AuthContext";
+
+const { setUser } = useAuth;
 
 const API_URL = "http://localhost:4000/api";
 
@@ -56,8 +59,10 @@ const Login = () => {
             const password = formData.password;
 
             const result = await authApi.post("/auth/login", { username, password });
+            console.log(result);
 
-            if (result.success) {
+            
+            if (result.data.accessToken) {
                 // 로그인 성공 시 대시보드로 이동
                 navigate("/");
             } else {

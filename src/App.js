@@ -14,6 +14,7 @@ import Security from "./pages/Security";
 import Testing from "./pages/Testing";
 import Settings from "./pages/Setting";
 import Login from "./pages/Login";
+import Service from "./pages/service";
 // 다른 페이지들 import
 
 // 보호된 라우트 컴포넌트
@@ -50,22 +51,7 @@ function AppRoutes() {
     return (
         <Router>
             <Routes>
-                <Route
-                    path="/login"
-                    element={
-                        <PublicRoute>
-                            <Login />
-                        </PublicRoute>
-                    }
-                />
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            <Layout />
-                        </ProtectedRoute>
-                    }
-                >
+                <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="/service/:serviceId" element={<ServicePage />} />
                     <Route path="/service/:serviceId/env/:envId" element={<EnvPage />} />
@@ -78,6 +64,7 @@ function AppRoutes() {
                     <Route path="security" element={<Security />} />
                     <Route path="testing" element={<Testing />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="/service" element={<Service />} />
                     {/* 추가 페이지들 */}
                 </Route>
                 <Route path="login" element={<Login />} />

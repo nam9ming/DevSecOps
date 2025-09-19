@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:4000/api";
+const API_BASE_URL = "http://localhost:4000/";
 
 // 기본 API 요청을 위한 인스턴스
 const api = axios.create({
@@ -24,6 +24,7 @@ export const setAccessToken = (token) => {
 // 요청 인터셉터: 모든 API 요청에 Access Token을 헤더에 추가
 api.interceptors.request.use(
     (config) => {
+        console.log("[api] auth?", !!config.headers?.Authorization, config.url);
         if (accessToken) {
             config.headers["Authorization"] = `Bearer ${accessToken}`;
         }
@@ -62,4 +63,3 @@ api.interceptors.response.use(
 );
 
 export { api, authApi };
-
