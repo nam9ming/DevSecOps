@@ -44,6 +44,19 @@ const getCrumb = async () => {
     }
 };
 
+const mapNetworkError = (err) => {
+  // 응답이 없고(request만 존재) 네트워크 계열 코드인 경우만 처리
+  if (!err || err.response) return null;
+  const c = err.code || '';
+  if (c === 'ECONNREFUSED' || c === 'ENOTFOUND') {
+    return { status: 503, body: { error: 'Jenkins에 연결할 수 없습니다', code: 'JENKINS_UNREACHABLE' } };
+  }
+  if (c === 'ETIMEDOUT' || c === 'ECONNABORTED') {
+    return { status: 504, body: { error: 'Jenkins 응답 타임아웃', code: 'JENKINS_TIMEOUT' } };
+  }
+  return { status: 503, body: { error: '네트워크 오류', code: 'NETWORK_ERROR' } };
+};
+
 // Jenkins 잡 카탈로그(서비스별 dev/stage/prod 상태)
 router.get("/jobcatalog", async (req, res) => {
     try {
@@ -62,7 +75,7 @@ router.get("/jobcatalog", async (req, res) => {
                         statuses: {},
                     };
                 }
-
+                
                 try {
                     // 잡 상세에서 ENV 파라미터별 최신 빌드 상태 계산
                     const detail = await jx.get(`/job/${encodeURIComponent(service)}/api/json`, {
@@ -117,73 +130,78 @@ router.post("/deployments", async (req, res) => {
 
         res.status(200).json({ message: "빌드 요청됨", jobName, queueUrl });
     } catch (err) {
-        console.error("❌ 배포 요청 실패:", err.message);
-        res.status(500).json({ error: "배포 요청 실패" });
+        // 1) 네트워크(백엔드→Jenkins) 오류 우선 처리
+        if (err.request && !err.response) {
+            const mapped = mapNetworkError(err);
+            console.error('❌ 네트워크 오류:', err.code || err.message);
+            return res.status(mapped.status).json(mapped.body);
+        }
+        // 2) 그 외( Jenkins가 응답은 했지만 실패 / 기타 내부 오류 )
+        console.error('❌ 배포 요청 실패:', err.response?.status || err.message);
+        return res.status(500).json({ error: '배포 요청 실패', code: 'INTERNAL_ERROR' });
     }
 });
 
 // 마지막 배포시간 조회
 // - 신형: /lastdeploy?job=<잡명>&env=<dev|stage|prod>
 // - 구형: /lastdeploy?service=<잡명>&kind=<lastCompletedBuild|lastSuccessfulBuild>
+// 마지막 배포시간 조회
 router.get("/lastdeploy", async (req, res) => {
-    try {
-        const job = (req.query.job || "").toString();
-        const env = (req.query.env || "").toString().toLowerCase();
+  try {
+    const job = (req.query.job || "").toString();
+    const env = (req.query.env || "").toString().toLowerCase();
 
-        // ✅ 단일 잡 + ENV 파라미터 기반
-        if (job && env) {
-            const { data } = await jx.get(`/job/${encodeURIComponent(job)}/api/json`, {
-                params: {
-                    tree: "builds[number,timestamp,result,building,actions[parameters[name,value]]]",
-                },
-            });
-
-            const builds = data.builds || [];
-            const filtered = builds
-                .filter((b) => {
-                    const params = (b.actions || []).flatMap((a) => a.parameters || []);
-                    const p = params.find((p) => p && p.name === "ENV");
-                    return p && String(p.value).toLowerCase() === env;
-                })
-                .sort((a, b) => b.number - a.number);
-
-            if (!filtered.length) return res.json({ lastDeploy: null });
-
-            const latest = filtered[0];
-            const formatted = new Date(latest.timestamp).toLocaleString("ko-KR", {
-                timeZone: "Asia/Seoul",
-            });
-
-            return res.json({
-                lastDeploy: formatted,
-                buildNumber: latest.number,
-                result: latest.result || "UNKNOWN",
-            });
-        }
-
-        // ◀️ 구형 파라미터(서비스 + kind) 지원
-        const jobName = req.query.service;
-        const kind = (req.query.kind || "lastCompletedBuild").toString(); // or lastSuccessfulBuild
-        if (!jobName) return res.status(400).json({ error: "job/env 또는 service 파라미터가 필요합니다." });
-
-        const { data } = await jx.get(`/job/${encodeURIComponent(jobName)}/${kind}/api/json`);
-
-        if (!data?.timestamp) return res.json({ lastDeploy: null });
-
-        const formatted = new Date(data.timestamp).toLocaleString("ko-KR", {
-            timeZone: "Asia/Seoul",
-        });
-
-        res.json({
-            lastDeploy: formatted,
-            buildNumber: data.number,
-            result: data.result || "UNKNOWN",
-        });
-    } catch (err) {
-        if (err.response?.status === 404) return res.json({ lastDeploy: null });
-        console.error("🔴 배포 시간 조회 실패:", err.message);
-        res.status(500).json({ error: "배포 시간 조회 실패" });
+    if (!job) {
+      return res.status(400).json({ error: "job 파라미터가 필요합니다." });
     }
+
+    if (!env || env === "default") {
+      const { data } = await jx.get(`/job/${encodeURIComponent(job)}/lastBuild/api/json`);
+      if (!data?.timestamp) return res.json({ lastDeploy: null });
+
+      const formatted = new Date(data.timestamp).toLocaleString("ko-KR", {
+        timeZone: "Asia/Seoul",
+      });
+
+      return res.json({
+        lastDeploy: formatted,
+        buildNumber: data.number,
+        result: data.result || "UNKNOWN",
+      });
+    }
+
+    const { data } = await jx.get(`/job/${encodeURIComponent(job)}/api/json`, {
+      params: {
+        tree: "builds[number,timestamp,result,building,actions[parameters[name,value]]]",
+      },
+    });
+
+    const builds = data.builds || [];
+    const filtered = builds
+      .filter((b) => {
+        const params = (b.actions || []).flatMap((a) => a.parameters || []);
+        const p = params.find((p) => p && p.name === "ENV");
+        return p && String(p.value).toLowerCase() === env;
+      })
+      .sort((a, b) => b.number - a.number);
+
+    if (!filtered.length) return res.json({ lastDeploy: null });
+
+    const latest = filtered[0];
+    const formatted = new Date(latest.timestamp).toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
+    });
+
+    return res.json({
+      lastDeploy: formatted,
+      buildNumber: latest.number,
+      result: latest.result || "UNKNOWN",
+    });
+  } catch (err) {
+    if (err.response?.status === 404) return res.json({ lastDeploy: null });
+    console.error("🔴 배포 시간 조회 실패:", err.message);
+    res.status(500).json({ error: "배포 시간 조회 실패" });
+  }
 });
 
 module.exports = router;
