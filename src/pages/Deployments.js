@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Database } from "lucide-react";
 
 const statusColor = {
   Success: 'bg-green-500',
@@ -11,14 +12,17 @@ const statusColor = {
 
 // 상태 뱃지 컴포넌트
 const StatusBadge = ({ status }) => (
-  <span className={`text-white text-sm px-2 py-1 rounded ${statusColor[status] || 'bg-gray-400'}`}>
+  <span
+    className={`text-white text-sm px-3 py-1 rounded-full ${statusColor[status] || 'bg-gray-400'}`}
+  >
     {status}
   </span>
 );
 
+
 const ProxyURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:4000';
 
-const Deployments = () => {
+const Deployments = (prop) => {
 
   // 서비스 배포 상태를 가져오기 위한 상태
   const [serviceData, setServiceData] = useState([]);
@@ -42,13 +46,11 @@ const Deployments = () => {
   // 서비스 클릭 시 해당 서비스의 배포 화면으로 이동함
   const handleServiceClick = (name) => {
     const envURL = name.toLowerCase().replace(/\s+/g, '-'); 
-    navigate(`/deployments/${envURL}`); // 기본 env는 dev로
+    navigate(`/service/${envURL}`); // 기본 env는 dev로
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">서비스 배포</h1>
-
       <div className="space-y-4">
         {serviceData.map(({ name, statuses }) => (
           <div
@@ -57,7 +59,7 @@ const Deployments = () => {
             onClick={() => handleServiceClick(name)}
           >
             <div className="font-medium flex items-center space-x-2">
-              <span>🗄️</span>
+              <Database></Database>
               <span>{name}</span>
             </div>
             <div className="flex space-x-4">
