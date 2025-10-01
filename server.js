@@ -17,6 +17,7 @@ const auth = require("./routes/auth/auth_controller.js");
 const pipelineRoute = require("./routes/pipelineRoute");
 const deploymentRoute = require("./routes/deploymentRoute");
 const perfRoute = require("./routes/perfRoute");
+const createjobRoute = require("./routes/createjobRoute.js")
 
 // CORS 설정
 
@@ -45,6 +46,7 @@ app.get("/", (req, res) => {
 app.use("/api/pipeline", pipelineRoute);
 app.use("/api/deployment", deploymentRoute);
 app.use("/api/perf", perfRoute);
+app.use("/api/jobCreate", createjobRoute);
 
 // 레거시 호환
 app.use("/api/jenkins", pipelineRoute); // services, :jobName/executions, :jobName/build/:execId
