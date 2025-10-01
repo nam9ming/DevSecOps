@@ -54,10 +54,13 @@ const DeploymentDetail = () => {
     const requestDeploy = async (serviceName, target) => {
         const jobName = serviceName.toLowerCase().replace(/\s+/g, "-");
         try {
-            const res = await axios.post(`${ProxyURL}/api/deployment/deployments`, {
+            let res;
+            res = await axios.post(`${ProxyURL}/api/deployment/deployments`, {
                 jobName,
                 params: { ENV: target.toLowerCase() }, // Jenkins에 전달할 파라미터
             });
+        
+
             if (res.status === 200) {
                 alert("배포 요청이 성공적으로 전송되었습니다.");
                 const now = new Date().toLocaleString();
@@ -69,8 +72,15 @@ const DeploymentDetail = () => {
                 alert("배포 요청에 실패했습니다.");
             }
         } catch (error) {
-            console.error("배포 요청 중 오류 발생:", error);
-            alert("배포 요청 중 오류가 발생했습니다.");
+            if (error.response) {
+            // 백엔드가 내려준 내용을 그대로 표시
+            const { data } = error.response;
+            alert(`오류 발생: ${data.code || ''} ${data.error || ''}`);
+            } else if (error.request) {
+                alert("네트워크 오류: Jenkins 서버에 연결할 수 없습니다.");
+            } else {
+            alert(`알 수 없는 오류: ${error.message}`);
+            }
         }
     };
 
@@ -120,7 +130,10 @@ const DeploymentDetail = () => {
                     </button>
                 ))}
             </div>
-
+            <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
+                <span aria-hidden className="text-blue-500">ℹ️</span>
+                <span>배포를 위해선 각 환경을 매개변수에 등록해야 합니다.</span>
+            </div>
             <DeploymentForm target={activeTab.toUpperCase()} lastDeploy={lastDeploy[activeTab]} lastResult={lastResult[activeTab]} />
 
             <button className="mt-6 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600" onClick={() => requestDeploy(serviceName, activeTab)}>
