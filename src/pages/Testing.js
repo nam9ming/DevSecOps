@@ -201,53 +201,6 @@ export default function Testing() {
                             <div className="space-y-5">
                                 {loading && <div className="text-sm">불러오는 중…</div>}
 
-                                {/* JMeter 요약 */}
-                                {jm && (
-                                    <>
-                                        <div className="font-semibold">JMeter Summary</div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                            <div className="p-3 rounded bg-gray-50">
-                                                <div className="text-xs text-gray-500">Samples</div>
-                                                <div className="text-lg font-semibold">{jm.samples}</div>
-                                            </div>
-                                            <div className="p-3 rounded bg-gray-50">
-                                                <div className="text-xs text-gray-500">Error %</div>
-                                                <div className="text-lg font-semibold">{typeof jm.errorPct === "number" ? jm.errorPct : "-"}</div>
-                                            </div>
-                                            <div className="p-3 rounded bg-gray-50">
-                                                <div className="text-xs text-gray-500">Avg (ms)</div>
-                                                <div className="text-lg font-semibold">{jm.avgMs}</div>
-                                            </div>
-                                            <div className="p-3 rounded bg-gray-50">
-                                                <div className="text-xs text-gray-500">P90 (ms)</div>
-                                                <div className="text-lg font-semibold">{jm.p90Ms}</div>
-                                            </div>
-                                            <div className="p-3 rounded bg-gray-50">
-                                                <div className="text-xs text-gray-500">Throughput</div>
-                                                <div className="text-lg font-semibold">{jm.throughput}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap gap-3 mt-2">
-                                            {jReport && (
-                                                <a href={jReport} target="_blank" rel="noreferrer" className="underline text-blue-600 text-sm">
-                                                    Jenkins HTML 리포트 열기
-                                                </a>
-                                            )}
-                                            {selJob && selBuild && (
-                                                <a href={`${JENKINS}/job/${encodeURIComponent(selJob)}/${selBuild}/artifact/jmeter-summary.json`} target="_blank" rel="noreferrer" className="underline text-blue-600 text-sm">
-                                                    jmeter-summary.json
-                                                </a>
-                                            )}
-                                            {selJob && selBuild && (
-                                                <a href={`${JENKINS}/job/${encodeURIComponent(selJob)}/${selBuild}/artifact/sonar-gate.json`} target="_blank" rel="noreferrer" className="underline text-blue-600 text-sm">
-                                                    sonar-gate.json
-                                                </a>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-
                                 {/* SonarQube 상세 지표 (자동 로딩) */}
                                 <div className="space-y-3">
                                     <div className="font-semibold">SonarQube</div>
