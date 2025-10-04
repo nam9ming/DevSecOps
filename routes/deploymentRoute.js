@@ -71,7 +71,7 @@ router.get("/jobcatalog", async (req, res) => {
 
                 if (!serviceMap[service]) {
                     serviceMap[service] = {
-                        name: service.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                        name: service,
                         statuses: {},
                     };
                 }
@@ -113,6 +113,52 @@ router.get("/jobcatalog", async (req, res) => {
         console.error("💥 Jenkins 연동 오류:", err.message);
         res.status(500).json({ error: "Jenkins에서 Job 정보를 가져오지 못했습니다." });
     }
+});
+
+// Jenkins job 삭제
+router.delete("/jobcatalog/:name", async (req, res) => {
+  const raw = req.params.name || "";
+  if (!raw) return res.status(400).json({ error: "name 파라미터가 필요합니다." });
+
+  try {
+    const exists = await jx
+      .get(`/job/${encodeURIComponent(raw)}/api/json`)
+      .then(() => true)
+      .catch((e) => (e?.response?.status === 404 ? false : (() => { throw e })()));
+
+    if (!exists) {
+      return res.status(404).json({ error: "해당 잡을 찾을 수 없습니다.", name: raw });
+    }
+
+    const crumb = await getCrumb();
+
+    await jx.post(`/job/${encodeURIComponent(raw)}/doDelete`, null, {
+      headers: { ...crumb },
+      maxRedirects: 0,
+      validateStatus: (s) => (s >= 200 && s < 300) || s === 302 || s === 303
+    });
+
+    return res.status(200).json({ message: "삭제 완료", name: raw });
+  } catch (err) {
+    if (err.request && !err.response) {
+      const mapped = mapNetworkError(err);
+      console.error("❌ 삭제 네트워크 오류:", err.code || err.message);
+      return res.status(mapped.status).json(mapped.body);
+    }
+
+    const status = err.response?.status;
+    const msg =
+      status === 403
+        ? "권한이 없습니다(403). Jenkins 권한/crumb 설정을 확인하세요."
+        : status === 404
+        ? "대상 잡을 찾지 못했습니다(404)."
+        : "삭제 중 오류가 발생했습니다.";
+
+    console.error("❌ 삭제 실패:", status || err.message);
+    return res
+      .status(500)
+      .json({ error: msg, code: "DELETE_FAILED", detail: status || err.message });
+  }
 });
 
 // 빌드(배포) 트리거
