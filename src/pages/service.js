@@ -1,10 +1,11 @@
 import Deployments from "./Deployments";
 import AddService from "../components/AddService";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const Service = () => {
 
     const [open, setOpen] = useState(false);
+    const deploymentsRef = useRef(null);
 
       return (
     <section className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -20,7 +21,7 @@ const Service = () => {
       </div>
 
       <div className="p-6 space-y-4">
-        <Deployments />
+        <Deployments ref={deploymentsRef} />
       </div>
 
       {/* 모달 */}
@@ -29,8 +30,7 @@ const Service = () => {
         onClose={() => setOpen(false)}
         onCreated={() => {
           setOpen(false);
-          // 필요하면 여기서 리스트 갱신 로직 호출
-          // e.g., refetch deployments
+          deploymentsRef.current?.refetch();
         }}
       />
     </section>
