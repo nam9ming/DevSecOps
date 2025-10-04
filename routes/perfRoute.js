@@ -23,6 +23,24 @@ if (SONAR_TOKEN) {
     });
 }
 
+// 파일 상단 근처에 추가
+async function findStatsPath(job, build) {
+  // 1) 먼저 우리가 기대하는 고정 경로 시도
+  const fixed = `/job/${encodeURIComponent(job)}/${build}/artifact/jmeter_${build}/html/statistics.json`;
+  try {
+    await jx.head(fixed);
+    return fixed;
+  } catch (_) { /* fallthrough */ }
+
+  // 2) 아티팩트 목록에서 자동 탐색
+  const { data } = await jx.get(`/job/${encodeURIComponent(job)}/${build}/api/json`, {
+    params: { tree: 'artifacts[fileName,relativePath]' },
+  });
+  const hit = (data.artifacts || []).find(a => /(^|\/)statistics\.json$/i.test(a.relativePath));
+  if (!hit) throw new Error('statistics.json not found in artifacts');
+  return `/job/${encodeURIComponent(job)}/${build}/artifact/${hit.relativePath}`;
+}
+
 // 마지막 빌드 번호 얻기
 async function resolveBuild(job, build) {
     if (build) return String(build);
@@ -91,29 +109,29 @@ router.get("/sonar/gate-by-build", async (req, res) => {
 });
 
 /** JMeter 요약 (statistics.json → 필요한 값만) */
-router.get("/jmeter/summary", async (req, res) => {
-    try {
-        const job = req.query.job;
-        if (!job) return res.status(400).json({ error: "job 파라미터 필요" });
+router.get('/jmeter/summary', async (req, res) => {
+  try {
+    const job = req.query.job;
+    if (!job) return res.status(400).json({ error: 'job 파라미터 필요' });
 
-        const build = await resolveBuild(job, req.query.build);
-        const path = `/job/${encodeURIComponent(job)}/${build}/artifact/jmeter_${build}/html/statistics.json`;
-        const { data: stats } = await jx.get(path);
+    const build = await resolveBuild(job, req.query.build);
+    const statsPath = await findStatsPath(job, build);       // ← 자동 탐색 사용
+    const { data: stats } = await jx.get(statsPath);
 
-        // JMeter 5.6.x HTML 리포트 statistics.json에 'Total' 키가 존재 (환경에 따라 대소문자 차이 대비)
-        const total = stats.Total || stats.total || stats.ALL || stats.all || stats;
-        const summary = {
-            build: Number(build),
-            samples: total.sampleCount,
-            errorPct: total.errorPercentage,
-            avgMs: total.meanResTime,
-            p90Ms: total.p90,
-            throughput: total.throughput,
-        };
-        res.json({ summary, raw: stats });
-    } catch (e) {
-        res.status(404).json({ error: "JMeter 통계 파일을 찾지 못함", detail: e.message });
-    }
+    const total = stats.Total || stats.total || stats.ALL || stats.all || stats;
+    const summary = {
+      build: Number(build),
+      samples: total.sampleCount,
+      errorPct: total.errorPercentage,
+      avgMs: total.meanResTime,
+      p90Ms: total.p90,
+      throughput: total.throughput,
+    };
+    res.json({ summary, raw: stats });
+  } catch (e) {
+    console.error('[JMETER SUMMARY]', req.query, e.response?.status, e.response?.data || e.message);
+    res.status(404).json({ error: 'JMeter 통계 파일을 찾지 못함', detail: e.message });
+  }
 });
 
 /** Sonar 핵심 지표 */
