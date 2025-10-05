@@ -18,7 +18,6 @@ const Header = () => {
         navigate("/login");
     };
 
-    // 외부 클릭 시 드롭다운 닫기
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
@@ -59,7 +58,7 @@ const Header = () => {
                     {userDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                             <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                                <div className="font-medium">{user?.name || "사용자"}</div>
+                                <div className="font-medium">{user?.username || "사용자"}</div>
                                 <div className="text-gray-500">{user?.email || "user@example.com"}</div>
                             </div>
                             <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">

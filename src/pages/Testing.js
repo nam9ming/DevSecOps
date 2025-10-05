@@ -1,6 +1,7 @@
 // src/pages/Testing.js
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { authApi } from "../context/axios";
 
 const API = process.env.REACT_APP_API_BASE || "http://localhost:4000";
 const JENKINS = process.env.REACT_APP_JENKINS_BASE || "http://192.168.0.4:8080";
@@ -64,7 +65,7 @@ export default function Testing() {
     useEffect(() => {
         (async () => {
             try {
-                const { data } = await axios.get(`${API}/api/perf/jenkins/jobs`);
+                const { data } = await authApi.get(`${API}/api/perf/jenkins/jobs`);
                 setJobs(data);
             } catch (e) {
                 setErr(e.response?.data?.error || e.message);

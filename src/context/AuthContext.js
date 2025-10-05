@@ -1,88 +1,66 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+// src/context/AuthContext.jsx (요지)
+import { createContext, useContext, useEffect, useState } from "react";
+import { authApi } from "../context/axios";
+import { setAccessToken as setAxiosAccessToken } from "../context/axios";
 
-const API_URL = "http://localhost:4000/api";
+const AuthContext = createContext(null);
+export const useAuth = () => useContext(AuthContext);
 
-const AuthContext = createContext();
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
-
-export const AuthProvider = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+export default function AuthProvider({ children }) {
+    const [user, setUser] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("user")) || null;
+        } catch {
+            return null;
+        }
+    });
+    const [accessToken, setAccessToken] = useState(null);
+    const [authReady, setAuthReady] = useState(false); // ← 부팅 게이트
 
     useEffect(() => {
-        // 페이지 로드 시 인증 상태 확인
-        const token = localStorage.getItem("token");
-        if (token) {
-            // TODO: 토큰 유효성 검증 API 호출
-            setIsAuthenticated(true);
-            setUser({
-                id: 1,
-                name: "사용자",
-                email: "user@example.com",
-                avatar: "남",
-            });
-        }
-        setLoading(false);
+        (async () => {
+            try {
+                const { data } = await authApi.post("/auth/refresh", {}, { withCredentials: true });
+                if (data?.accessToken) {
+                    setAccessToken(data.accessToken); // Context 상태
+                    setAxiosAccessToken(data.accessToken); // (전역 변수) 인터셉터용
+                    authApi.defaults.headers.common.Authorization =
+                        // ★ 첫 요청도 커버
+                        `Bearer ${data.accessToken}`;
+                }
+                setAuthReady(true);
+            } catch (_) {
+                // refresh 실패 → 비로그인 상태로 시작
+            } finally {
+                setAuthReady(true);
+            }
+        })();
     }, []);
 
-    const login = async (email, password) => {
+    useEffect(() => {
+        // 인터셉터에서 참조하는 토큰 메모리 갱신
+        setAxiosAccessToken(accessToken);
+    }, [accessToken]);
+
+    useEffect(() => {
+        if (user) localStorage.setItem("user", JSON.stringify(user));
+        else localStorage.removeItem("user");
+    }, [user]);
+
+    const login = async (username, password) => {
+        const { data } = await authApi.post("/auth/login", { username, password }, { withCredentials: true });
+        setUser({ id: data.id, username: data.username });
+        setAccessToken(data.accessToken);
+    };
+
+    const logout = async () => {
         try {
-            // TODO: 실제 로그인 API 호출
-            // const response = await fetch('/api/auth/login', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({ email, password })
-            // });
-
-            // 임시 로그인 로직
-            if (email && password) {
-                const mockUser = {
-                    id: 1,
-                    name: "사용자",
-                    email: email,
-                    avatar: "남",
-                };
-
-                // 토큰 저장 (실제 구현 시 서버에서 받은 토큰 사용)
-                localStorage.setItem("token", "mock-jwt-token");
-                localStorage.setItem("user", JSON.stringify(mockUser));
-
-                setIsAuthenticated(true);
-                setUser(mockUser);
-
-                return { success: true };
-            } else {
-                throw new Error("이메일과 비밀번호를 입력해주세요.");
-            }
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    };
-
-    const logout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setIsAuthenticated(false);
+            await authApi.post("/auth/logout", {}, { withCredentials: true });
+        } catch {}
         setUser(null);
+        setAccessToken(null);
     };
 
-    const value = {
-        isAuthenticated,
-
-        user,
-        loading,
-        login,
-        logout,
-    };
-
+    const value = { user, setUser, accessToken, setAccessToken, login, logout, authReady };
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}

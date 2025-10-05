@@ -1,7 +1,8 @@
 // src/components/PipelineEditor.jsx
 import React, { useState, useRef } from "react";
 import { useEffect } from "react";
-import axios from "axios";
+
+import { authApi } from "../context/axios.js";
 
 export default function PipelineEditor(props) {
     const [mode, setMode] = useState("default");
@@ -23,7 +24,7 @@ export default function PipelineEditor(props) {
 
     useEffect(() => {
         console.log("jobName:", jobName);
-        axios
+        authApi
             .get("http://localhost:4000/api/pipeline/config", {
                 params: { jobName: jobName },
             })

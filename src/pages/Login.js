@@ -4,15 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { authApi } from "../context/axios";
 import { useAuth } from "../context/AuthContext";
 
+import { useAttachInterceptors } from "../context/axios";
+
 const { setUser } = useAuth;
 
 const API_URL = "http://localhost:4000/api";
 
 const Login = () => {
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
+    const { login } = useAuth();
+
+    useAttachInterceptors();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("login");
@@ -23,6 +24,16 @@ const Login = () => {
     const [message, setMessage] = useState("");
 
     const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        username: "",
+        password: "",
+    });
+
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        await login(formData.username, formData.password);
+        navigate("/"); // 혹은 navigate("/dashboard")
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -55,21 +66,16 @@ const Login = () => {
         setError("");
 
         try {
-            const username = formData.email;
+            const username = formData.username;
             const password = formData.password;
 
-            const result = await authApi.post("/auth/login", { username, password });
+            const result = await login(username, password);
             console.log(result);
 
-            
-            if (result.data.accessToken) {
-                // 로그인 성공 시 대시보드로 이동
-                navigate("/");
-            } else {
-                setError(result.error || "로그인에 실패했습니다. 다시 시도해주세요.");
-            }
+            navigate("/", { state: { username: username } });
         } catch (err) {
-            setError("로그인에 실패했습니다. 다시 시도해주세요.");
+            setError("로그인에 실패했습니다. 다시 시도해주세요.123");
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
@@ -87,9 +93,9 @@ const Login = () => {
         }
 
         try {
-            setUsername(formData.email);
+            setUsername(formData.username);
             setPassword(formData.password);
-            const username = formData.email;
+            const username = formData.username;
             const password = formData.password;
 
             const response = await authApi.post("/auth/register", { username, password });
@@ -129,13 +135,13 @@ const Login = () => {
                             </label>
                             <input
                                 id="email"
-                                name="email"
+                                name="username"
                                 type="email"
                                 autoComplete="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                 placeholder="이메일 주소"
-                                value={formData.email}
+                                value={formData.username}
                                 onChange={handleChange}
                             />
                         </div>
@@ -244,14 +250,14 @@ const Login = () => {
                                 이메일 주소
                             </label>
                             <input
-                                id="email"
-                                name="email"
+                                id="username"
+                                name="username"
                                 type="email"
                                 autoComplete="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                 placeholder="이메일 주소"
-                                value={formData.email}
+                                value={formData.username}
                                 onChange={handleChange}
                             />
                         </div>

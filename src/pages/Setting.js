@@ -2,15 +2,21 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Settings as SettingsIcon, Database, Save, RefreshCw, Trash2, Eye } from "lucide-react";
 // import { Shield, Bell, Palette, CheckCircle, AlertCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const Settings = () => {
-    const [SettingsForm, setSettingsForm] = useState({
-        JenkinsUrl: "",
-        JenkinsApiToken: "",
-        GitHubApiToken: "",
-        DockerRegistryURL: "",
-        KubernetesConfig: "",
-    });
+    const { user, UserSetting } = useAuth();
+
+    const [SettingsForm, setSettingsForm] = useState(
+        UserSetting || {
+            JenkinsUser: "",
+            JenkinsUrl: "",
+            JenkinsApiToken: "",
+            GitHubApiToken: "",
+            DockerRegistryURL: "",
+            KubernetesConfig: "",
+        }
+    );
 
     // const { JenkinsUrl, JenkinsApiToken, GitHubApiToken, DockerRegistryURL, KubernetesConfig } = SettingsForm;
 
@@ -27,10 +33,10 @@ const Settings = () => {
     };
 
     const handleSettingsUpdate = async (e) => {
-        console.log(SettingsForm);
-
         try {
-            const response = await axios.post("http://localhost:4000/api/setting/inter", SettingsForm);
+            const response = await axios.put("http://localhost:4000/api/setting/inter", { SettingsForm, user });
+
+            localStorage.setItem("setting", JSON.stringify(SettingsForm));
             console.log("서버 응답:", response);
         } catch (error) {
             console.error("전송 오류:", error);
@@ -413,13 +419,17 @@ const Settings = () => {
                 <form>
                     <div className="p-6 space-y-4">
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Jenkins User</label>
+                            <input type="url" id="JenkinsUser" value={SettingsForm.JenkinsUser} onChange={handleInputChange} name="JenkinsUser" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Jenkins URL</label>
-                            <input type="url" id="JenkinsUrl" value={SettingsForm.JenkinsUrl} onChange={handleInputChange} name="JenkinsUrl" defaultValue="http://jenkins.example.com" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input type="url" id="JenkinsUrl" value={SettingsForm.JenkinsUrl} onChange={handleInputChange} name="JenkinsUrl" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Jenkins API Token</label>
                             <div className="relative">
-                                <input type="text" id="JenkinsApiToken" value={SettingsForm.JenkinsApiToken} onChange={handleInputChange} name="JenkinsApiToken" defaultValue="" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <input type="text" id="JenkinsApiToken" value={SettingsForm.JenkinsApiToken} onChange={handleInputChange} name="JenkinsApiToken" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 <button className="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
                                     <Eye className="w-4 h-4" />
                                 </button>
@@ -428,7 +438,7 @@ const Settings = () => {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">GitHub API Token</label>
                             <div className="relative">
-                                <input type="text" id="GitHubApiToken" value={SettingsForm.GitHubApiToken} onChange={handleInputChange} name="GitHubApiToken" defaultValue="" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <input type="text" id="GitHubApiToken" value={SettingsForm.GitHubApiToken} onChange={handleInputChange} name="GitHubApiToken" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 <button className="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
                                     <Eye className="w-4 h-4" />
                                 </button>
@@ -436,27 +446,11 @@ const Settings = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Docker Registry URL</label>
-                            <input
-                                type="url"
-                                id="DockerRegistryURL"
-                                value={SettingsForm.DockerRegistryURL}
-                                onChange={handleInputChange}
-                                name="DockerRegistryURL"
-                                defaultValue="https://registry.example.com"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <input type="url" id="DockerRegistryURL" value={SettingsForm.DockerRegistryURL} onChange={handleInputChange} name="DockerRegistryURL" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Kubernetes Config</label>
-                            <textarea
-                                defaultValue="apiVersion: v1\nkind: Config\n..."
-                                id="KubernetesConfig"
-                                value={SettingsForm.KubernetesConfig}
-                                onChange={handleInputChange}
-                                name="KubernetesConfig"
-                                rows={5}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                            />
+                            <textarea id="KubernetesConfig" value={SettingsForm.KubernetesConfig} onChange={handleInputChange} name="KubernetesConfig" rows={5} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" />
                         </div>
                     </div>
                 </form>

@@ -5,6 +5,7 @@ import classNames from "classnames";
 import axios from "axios";
 import PipelineEditor from "../components/PipelineEditor";
 import DeploymentDetail from "./DeploymentDetail";
+import { authApi } from "../context/axios";
 
 const environments = [
     { name: "Dev", label: "DEV 환경", status: "Success", updatedAt: "2025.07.08 15:30" },
@@ -24,7 +25,7 @@ const ServicePage = () => {
     const [serviceDisplayName, setServiceDisplayName] = useState("");
 
     useEffect(() => {
-        axios
+        authApi
             .get("http://localhost:4000/api/jenkins/services")
             .then((res) => {
                 // 전체 서비스명 리스트 확인
