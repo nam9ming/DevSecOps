@@ -101,9 +101,13 @@ const Login = () => {
             const response = await authApi.post("/auth/register", { username, password });
 
             setMessage(response.data); // "회원가입이 성공적으로 완료되었습니다."
+            alert("회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다.");
+
             setUsername("");
             setPassword("");
             setConfirmPassword("");
+            setActiveTab("login");
+            renderActiveTab();
         } catch (err) {
             if (err.response && err.response.status === 409) {
                 setError(err.response.data); // "이미 존재하는 사용자 이름입니다."
