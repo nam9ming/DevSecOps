@@ -1,10 +1,12 @@
 // routes/perfRoute.js
 const express = require("express");
 const router = express.Router();
+
 const axios = require("axios");
 
-const { JENKINS_URL, AUTH } = require("../config/jenkins"); // 앞서 만든 config/jenkins.js
-const jx = axios.create({ baseURL: JENKINS_URL, auth: AUTH, timeout: 10000 });
+const { authenticateToken } = require("../auth/auth_middleware");
+const attachUserSetting = require("../middleware/attachUserSetting");
+const { createApiClient } = require("../auth/axiosClient");
 
 const SONAR_URL = process.env.SONAR_URL || "http://localhost:9000";
 const SONAR_TOKEN = process.env.SONAR_TOKEN || ""; // 비워두면 인증 안 붙임
@@ -25,20 +27,22 @@ if (SONAR_TOKEN) {
 
 // 파일 상단 근처에 추가
 async function findStatsPath(job, build) {
-  // 1) 먼저 우리가 기대하는 고정 경로 시도
-  const fixed = `/job/${encodeURIComponent(job)}/${build}/artifact/jmeter_${build}/html/statistics.json`;
-  try {
-    await jx.head(fixed);
-    return fixed;
-  } catch (_) { /* fallthrough */ }
+    // 1) 먼저 우리가 기대하는 고정 경로 시도
+    const fixed = `/job/${encodeURIComponent(job)}/${build}/artifact/jmeter_${build}/html/statistics.json`;
+    try {
+        await jx.head(fixed);
+        return fixed;
+    } catch (_) {
+        /* fallthrough */
+    }
 
-  // 2) 아티팩트 목록에서 자동 탐색
-  const { data } = await jx.get(`/job/${encodeURIComponent(job)}/${build}/api/json`, {
-    params: { tree: 'artifacts[fileName,relativePath]' },
-  });
-  const hit = (data.artifacts || []).find(a => /(^|\/)statistics\.json$/i.test(a.relativePath));
-  if (!hit) throw new Error('statistics.json not found in artifacts');
-  return `/job/${encodeURIComponent(job)}/${build}/artifact/${hit.relativePath}`;
+    // 2) 아티팩트 목록에서 자동 탐색
+    const { data } = await jx.get(`/job/${encodeURIComponent(job)}/${build}/api/json`, {
+        params: { tree: "artifacts[fileName,relativePath]" },
+    });
+    const hit = (data.artifacts || []).find((a) => /(^|\/)statistics\.json$/i.test(a.relativePath));
+    if (!hit) throw new Error("statistics.json not found in artifacts");
+    return `/job/${encodeURIComponent(job)}/${build}/artifact/${hit.relativePath}`;
 }
 
 // 마지막 빌드 번호 얻기
@@ -55,9 +59,10 @@ async function resolveBuild(job, build) {
 }
 
 // --- Jenkins: 서비스(잡) 목록 ---
-router.get("/jenkins/jobs", async (req, res) => {
+router.get("/jenkins/jobs", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        console.log("Fetching Jenkins jobs from", JENKINS_URL);
+        const jx = createApiClient(req.userSetting);
+        // console.log("Fetching Jenkins jobs from11", jx.defaults.baseURL);
         const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color,lastBuild[number]]" } });
 
         const jobs = (data.jobs || []).map((j) => ({
@@ -65,16 +70,18 @@ router.get("/jenkins/jobs", async (req, res) => {
             color: j.color, // blue/blue_anime/red/…
             lastBuild: j.lastBuild?.number || null,
         }));
-        console.log("Jenkins jobs:", jobs.length);
+        // console.log("Jenkins jobs:", jobs.length);
         res.json(jobs);
     } catch (e) {
+        console.error("Error fetching Jenkins jobs:", e.message);
         res.status(500).json({ error: "Jenkins jobs 조회 실패", detail: e.message });
     }
 });
 
 // --- Jenkins: 특정 서비스의 빌드 목록 ---
-router.get("/jenkins/builds", async (req, res) => {
+router.get("/jenkins/builds", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         const job = req.query.job;
         const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100));
         if (!job) return res.status(400).json({ error: "job 파라미터 필요" });
@@ -96,8 +103,9 @@ router.get("/jenkins/builds", async (req, res) => {
 });
 
 // --- Sonar: 빌드별 품질게이트(파이프라인에서 아카이브한 파일 사용) ---
-router.get("/sonar/gate-by-build", async (req, res) => {
+router.get("/sonar/gate-by-build", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         const { job, build } = req.query;
         if (!job || !build) return res.status(400).json({ error: "job, build 필요" });
         const path = `/job/${encodeURIComponent(job)}/${build}/artifact/sonar-gate.json`;
@@ -109,34 +117,36 @@ router.get("/sonar/gate-by-build", async (req, res) => {
 });
 
 /** JMeter 요약 (statistics.json → 필요한 값만) */
-router.get('/jmeter/summary', async (req, res) => {
-  try {
-    const job = req.query.job;
-    if (!job) return res.status(400).json({ error: 'job 파라미터 필요' });
+router.get("/jmeter/summary", authenticateToken, attachUserSetting, async (req, res) => {
+    try {
+        const jx = createApiClient(req.userSetting);
+        const job = req.query.job;
+        if (!job) return res.status(400).json({ error: "job 파라미터 필요" });
 
-    const build = await resolveBuild(job, req.query.build);
-    const statsPath = await findStatsPath(job, build);       // ← 자동 탐색 사용
-    const { data: stats } = await jx.get(statsPath);
+        const build = await resolveBuild(job, req.query.build);
+        const path = `/job/${encodeURIComponent(job)}/${build}/artifact/jmeter_${build}/html/statistics.json`;
+        const { data: stats } = await jx.get(path);
 
-    const total = stats.Total || stats.total || stats.ALL || stats.all || stats;
-    const summary = {
-      build: Number(build),
-      samples: total.sampleCount,
-      errorPct: total.errorPercentage,
-      avgMs: total.meanResTime,
-      p90Ms: total.p90,
-      throughput: total.throughput,
-    };
-    res.json({ summary, raw: stats });
-  } catch (e) {
-    console.error('[JMETER SUMMARY]', req.query, e.response?.status, e.response?.data || e.message);
-    res.status(404).json({ error: 'JMeter 통계 파일을 찾지 못함', detail: e.message });
-  }
+        // JMeter 5.6.x HTML 리포트 statistics.json에 'Total' 키가 존재 (환경에 따라 대소문자 차이 대비)
+        const total = stats.Total || stats.total || stats.ALL || stats.all || stats;
+        const summary = {
+            build: Number(build),
+            samples: total.sampleCount,
+            errorPct: total.errorPercentage,
+            avgMs: total.meanResTime,
+            p90Ms: total.p90,
+            throughput: total.throughput,
+        };
+        res.json({ summary, raw: stats });
+    } catch (e) {
+        res.status(404).json({ error: "JMeter 통계 파일을 찾지 못함", detail: e.message });
+    }
 });
 
 /** Sonar 핵심 지표 */
 router.get("/sonar/summary", async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         const projectKey = req.query.projectKey;
         const metrics = "bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density";
         const r = await sonar.get("/api/measures/component", { params: { component: projectKey, metricKeys: metrics } });

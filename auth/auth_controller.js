@@ -56,7 +56,9 @@ router.post("/login", async (req, res) => {
     const uid = user.id ?? user.username; // user.id가 있으면 그걸 우선 사용
     const accessToken = jwt.sign({ id: user.id, username: user.username }, JWT_ACCESS_SECRET, { expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    let UserData = db.get("users").find({ id: user.id }).get("setting").value();
 
+    console.log(UserData);
     // 기존 토큰 제거 후 새로 저장
     db.get("refreshTokens").remove({ id: uid }).write();
     db.get("refreshTokens")
@@ -74,22 +76,22 @@ router.post("/login", async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ accessToken });
+    res.json({ accessToken, username: user.username, id: user.id, setting: UserData });
 });
 
 // Access Token 재발급
 router.post("/refresh", (req, res) => {
-    const { refreshToken } = req.cookies || {};
-    if (!refreshToken) return res.sendStatus(401);
-
-    const exists = db.get("refreshTokens").includes(refreshToken).value();
-    if (!exists) return res.sendStatus(403);
-
-    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, payload) => {
-        if (err) return res.sendStatus(403);
-        const accessToken = jwt.sign({ id: payload.id, username: payload.username }, JWT_ACCESS_SECRET, { expiresIn: "15m" });
-        res.json({ accessToken });
-    });
+    const rt = req.cookies?.refreshToken;
+    if (!rt) return res.status(401).send("No refresh");
+    try {
+        const p = jwt.verify(rt, JWT_REFRESH_SECRET);
+        const u = db.get("users").find({ id: p.id }).value();
+        const accessToken = jwt.sign({ id: u.id, username: u.username }, JWT_ACCESS_SECRET, { expiresIn: "15m" });
+        // 가능하면 user도 같이 주기
+        res.json({ accessToken, id: u.id, username: u.username });
+    } catch {
+        res.status(401).send("Invalid refresh");
+    }
 });
 
 // 로그아웃

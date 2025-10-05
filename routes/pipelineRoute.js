@@ -5,7 +5,10 @@ const axios = require("axios");
 const { JENKINS_URL, AUTH } = require("../config/jenkins");
 
 // axios instance
-const jx = axios.create({ baseURL: JENKINS_URL, auth: AUTH, timeout: 10000 });
+
+const { authenticateToken } = require("../auth/auth_middleware");
+const attachUserSetting = require("../middleware/attachUserSetting");
+const { createApiClient } = require("../auth/axiosClient");
 
 // color → status 매핑 (프런트 뱃지 표시용)
 const mapStatus = (color = "") => {
@@ -39,8 +42,9 @@ const getCrumb = async () => {
 /** ---------- 신규/추천 라우트 ---------- **/
 
 // Job 목록 요약(서비스 단위, env별 상태)
-router.get("/jobcatalog", async (req, res) => {
+router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color]" } });
         const serviceMap = {};
         for (const j of data.jobs ?? []) {
@@ -63,8 +67,9 @@ router.get("/jobcatalog", async (req, res) => {
 });
 
 // 특정 잡의 실행 이력
-router.get("/:jobName/executions", async (req, res) => {
+router.get("/:jobName/executions", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         const { jobName } = req.params;
         const { data } = await jx.get(`/job/${encodeURIComponent(jobName)}/api/json`, {
             params: { tree: "builds[number,result,timestamp,duration]" },
@@ -95,8 +100,9 @@ router.get("/:jobName/build/:execId", async (req, res) => {
 });
 
 // config.xml 읽기
-router.get("/config", async (req, res) => {
+router.get("/config", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const jx = createApiClient(req.userSetting);
         console.log(req.query);
         console.log(AUTH);
         const jobName = req.query.jobName;
@@ -132,8 +138,11 @@ router.post("/config", async (req, res) => {
 /** ---------- 레거시 호환 라우트(기존 프런트 유지용) ---------- **/
 
 // 기존: GET /api/jenkins/services  (간단 목록)
-router.get("/services", async (_req, res) => {
+router.get("/services", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        // console.log("🔵 /services 실행");
+        const jx = createApiClient(req.userSetting);
+        // console.log(req.userSetting);
         const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color]" } });
         const services = (data.jobs || []).map((j) => ({ name: j.name, status: j.color }));
         res.json({ services });

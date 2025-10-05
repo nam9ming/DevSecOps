@@ -8,7 +8,13 @@
     {
       "id": "1754999296566",
       "username": "123@123",
-      "password": "$2b$10$B7Wf2f5ju00eY9Haalou3OWQVT87p5w75njo2tjJzf1zM4IvwKfsO"
+      "password": "$2b$10$B7Wf2f5ju00eY9Haalou3OWQVT87p5w75njo2tjJzf1zM4IvwKfsO",
+      "setting": {
+        "JenkinsUrl": "http://192.168.0.5:8080",
+        "JenkinsUser": "ksh",
+        "JenkinsApiToken": "",
+        "Timeout": 15000
+      }
     },
     {
       "id": "1754999680737",
@@ -25,6 +31,11 @@
     {
       "id": "test@test.com",
       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTY5NjA1NjUxNTYiLCJpYXQiOjE3NTcwNjM5NjcsImV4cCI6MTc1NzY2ODc2N30.GBmQ9AJYyJ9iS3213t7IQMMOzS9uXhSSTtsuYWrbjjM"
+    },
+    {
+      "id": "1754999296566",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTQ5OTkyOTY1NjYiLCJpYXQiOjE3NTk1NzE2NTYsImV4cCI6MTc2MDE3NjQ1Nn0.IekmULJKjR38x8uLhPpgZ9fa9e3xc2rpDkuwEAhgwg8",
+      "createdAt": 1759571656070
     }
   ]
 }
