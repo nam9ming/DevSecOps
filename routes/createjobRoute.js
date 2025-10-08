@@ -1,14 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const { JENKINS_URL, AUTH } = require("../config/jenkins");
+//const { JENKINS_URL, AUTH } = require("../config/jenkins");
+
+const { authenticateToken } = require("../auth/auth_middleware");
+const attachUserSetting = require("../middleware/attachUserSetting");
+const { createApiClient } = require("../auth/axiosClient");
 
 /** Axios Jenkins 클라이언트 */
-const jx = axios.create({
+/*const jx = axios.create({
   baseURL: JENKINS_URL,
   auth: AUTH,
   timeout: 10000,
-});
+});*/
 
 /** CSRF Crumb 가져오기 (미사용 환경 고려) */
 async function getCrumb() {
@@ -87,10 +91,10 @@ function buildConfigXml(pipelineScript) {
 }
 
 /** 잡 생성 */
-router.post("/jobs", async (req, res) => {
+router.post("/jobs", authenticateToken, attachUserSetting, async (req, res) => {
   try {
     const { jobName, pipelineScript } = req.body;
-
+    const jx = createApiClient(req.userSetting);
     // 입력 검증
     if (!jobName || typeof jobName !== "string") {
       return res.status(400).json({ error: "jobName이 필요합니다.", code: "JOBNAME_REQUIRED" });
