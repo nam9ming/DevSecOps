@@ -18,10 +18,11 @@ const Login = () => {
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("login");
 
-    const [username1, setUsername] = useState("");
-    const [password1, setPassword] = useState("");
+    // const [username1, setUsername] = useState("");
+    // const [password1, setPassword] = useState("");
+
     const [confirmPassword, setConfirmPassword] = useState({ password: "" });
-    const [message, setMessage] = useState("");
+    // const [message, setMessage] = useState("");
 
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -83,7 +84,7 @@ const Login = () => {
 
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
-        setMessage("");
+        // setMessage("");
         setError("");
 
         if (formData.password !== confirmPassword.password) {
@@ -93,18 +94,18 @@ const Login = () => {
         }
 
         try {
-            setUsername(formData.username);
-            setPassword(formData.password);
+            // setUsername(formData.username);
+            // setPassword(formData.password);
             const username = formData.username;
             const password = formData.password;
 
             const response = await authApi.post("/auth/register", { username, password });
 
-            setMessage(response.data); // "회원가입이 성공적으로 완료되었습니다."
+            // setMessage(response.data); // "회원가입이 성공적으로 완료되었습니다."
             alert("회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다.");
 
-            setUsername("");
-            setPassword("");
+            // setUsername("");
+            // setPassword("");
             setConfirmPassword("");
             setActiveTab("login");
             renderActiveTab();

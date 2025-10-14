@@ -5,7 +5,6 @@ import StatusBadge from "../components/StatusBadge";
 import MetricCard from "../components/MetricCard";
 import SecurityChart from "../components/SecurityChart";
 import PerformanceChart from "../components/PerformanceChart";
-import NotificationList from "../components/NotificationList";
 
 import { authApi } from "../context/axios";
 
@@ -58,7 +57,6 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard title="활성 빌드" value={services.length} change={8} icon={Code} color="bg-blue-500" />
                 <MetricCard title="보안 이슈" value="7" change={-15} icon={AlertTriangle} color="bg-red-500" />
-                <MetricCard title="성공률" value="94%" change={2} icon={CheckCircle} color="bg-green-500" />
                 <MetricCard title="평균 TPS" value="186" change={12} icon={TrendingUp} color="bg-purple-500" />
             </div>
 
@@ -104,7 +102,6 @@ const Dashboard = () => {
             </div>
 
             {/* 알림 목록 */}
-            <NotificationList />
         </div>
     );
 };

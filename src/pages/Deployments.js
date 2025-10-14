@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
 import { authApi } from "../context/axios";
 import { Database, Trash2 } from "lucide-react";
 

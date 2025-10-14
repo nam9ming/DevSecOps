@@ -1,6 +1,6 @@
 // src/pages/Testing.js
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+
 import { authApi } from "../context/axios";
 
 const API = process.env.REACT_APP_API_BASE || "http://localhost:4000";
@@ -98,7 +98,7 @@ export default function Testing() {
         setSonar(null);
         setErr("");
         try {
-            const { data } = await axios.get(`${API}/api/perf/jenkins/builds`, {
+            const { data } = await authApi.get(`${API}/api/perf/jenkins/builds`, {
                 params: { job: name, limit: 30 },
             });
             setBuilds(data);
@@ -110,7 +110,7 @@ export default function Testing() {
     const loadSonar = async (projectKey) => {
         if (!projectKey) return setSonar(null);
         try {
-            const sm = await axios.get(`${API}/api/perf/sonar/summary`, { params: { projectKey } });
+            const sm = await authApi.get(`${API}/api/perf/sonar/summary`, { params: { projectKey } });
             setSonar(parseMeasures(sm.data));
         } catch (e) {
             setSonar(null);
@@ -126,7 +126,7 @@ export default function Testing() {
         setGate(null);
 
         try {
-            const [jmres, gateres] = await Promise.all([axios.get(`${API}/api/perf/jmeter/summary`, { params: { job: selJob, build: n } }), axios.get(`${API}/api/perf/sonar/gate-by-build`, { params: { job: selJob, build: n } }).catch(() => ({ data: { status: "UNKNOWN" } }))]);
+            const [jmres, gateres] = await Promise.all([authApi.get(`${API}/api/perf/jmeter/summary`, { params: { job: selJob, build: n } }), authApi.get(`${API}/api/perf/sonar/gate-by-build`, { params: { job: selJob, build: n } }).catch(() => ({ data: { status: "UNKNOWN" } }))]);
             setJm(jmres.data.summary || null);
             setGate(gateres.data || { status: "UNKNOWN" });
 

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { Settings as SettingsIcon, Database, Save, RefreshCw, Trash2, Eye } from "lucide-react";
+
+import { Settings as Database, Save, Eye } from "lucide-react";
 // import { Shield, Bell, Palette, CheckCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { authApi } from "../context/axios";
+import { useEffect } from "react";
+// import{Setting as SettingsIcon, RefreshCw,Trash2 } from "lucide-react";
 
 const Settings = () => {
     const { user, UserSetting } = useAuth();
@@ -12,11 +15,17 @@ const Settings = () => {
             JenkinsUser: "",
             JenkinsUrl: "",
             JenkinsApiToken: "",
-            GitHubApiToken: "",
-            DockerRegistryURL: "",
-            KubernetesConfig: "",
+            SonarQubeUrl: "",
+            SonarQubeApiToken: "",
+            JMeterUrl: "",
+            JMeterApiToken: "",
         }
     );
+    const [check, setCheck] = useState(false);
+    useEffect(() => {
+        console.log("Fetching setting info for user:", user);
+        authApi.get(`http://localhost:4000/api/setting?user=${user.id}`).then((response) => setSettingsForm(response.data));
+    }, []);
 
     // const { JenkinsUrl, JenkinsApiToken, GitHubApiToken, DockerRegistryURL, KubernetesConfig } = SettingsForm;
 
@@ -34,8 +43,7 @@ const Settings = () => {
 
     const handleSettingsUpdate = async (e) => {
         try {
-            const response = await axios.put("http://localhost:4000/api/setting/inter", { SettingsForm, user });
-
+            const response = await authApi.put("http://localhost:4000/api/setting/inter", { SettingsForm, user });
             localStorage.setItem("setting", JSON.stringify(SettingsForm));
             console.log("서버 응답:", response);
         } catch (error) {
@@ -103,74 +111,74 @@ const Settings = () => {
     };
 
     const tabs = [
-        { id: "general", name: "일반", icon: SettingsIcon },
+        // { id: "general", name: "일반", icon: SettingsIcon },
         // { id: "notifications", name: "알림", icon: Bell },
         // { id: "security", name: "보안", icon: Shield },
         // { id: "appearance", name: "외관", icon: Palette },
         { id: "integrations", name: "연동", icon: Database },
     ];
 
-    const renderGeneralSettings = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">기본 정보</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">프로젝트 이름</label>
-                        <input type="text" defaultValue="DevSecOps Dashboard" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">프로젝트 설명</label>
-                        <textarea defaultValue="DevSecOps 파이프라인 모니터링 및 관리 대시보드" rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">관리자 이메일</label>
-                        <input type="email" defaultValue="admin@devsecops.com" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                </div>
-            </div>
+    // const renderGeneralSettings = () => (
+    //     <div className="space-y-6">
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">기본 정보</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">프로젝트 이름</label>
+    //                     <input type="text" defaultValue="DevSecOps Dashboard" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">프로젝트 설명</label>
+    //                     <textarea defaultValue="DevSecOps 파이프라인 모니터링 및 관리 대시보드" rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //                 <div>
+    //                     <label className="block text-sm font-medium text-gray-700 mb-2">관리자 이메일</label>
+    //                     <input type="email" defaultValue="admin@devsecops.com" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    //                 </div>
+    //             </div>
+    //         </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">데이터 관리</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">데이터 백업</h4>
-                            <p className="text-sm text-gray-500">매일 자동으로 데이터를 백업합니다</p>
-                        </div>
-                        <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center gap-2">
-                            <Save className="w-4 h-4" />
-                            백업 실행
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">캐시 초기화</h4>
-                            <p className="text-sm text-gray-500">시스템 캐시를 초기화합니다</p>
-                        </div>
-                        <button className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 flex items-center gap-2">
-                            <RefreshCw className="w-4 h-4" />
-                            초기화
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-900">데이터 삭제</h4>
-                            <p className="text-sm text-gray-500">모든 데이터를 영구적으로 삭제합니다</p>
-                        </div>
-                        <button className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 flex items-center gap-2">
-                            <Trash2 className="w-4 h-4" />
-                            삭제
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    //         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    //             <div className="px-6 py-4 border-b border-gray-200">
+    //                 <h3 className="text-lg font-semibold text-gray-900">데이터 관리</h3>
+    //             </div>
+    //             <div className="p-6 space-y-4">
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">데이터 백업</h4>
+    //                         <p className="text-sm text-gray-500">매일 자동으로 데이터를 백업합니다</p>
+    //                     </div>
+    //                     <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center gap-2">
+    //                         <Save className="w-4 h-4" />
+    //                         백업 실행
+    //                     </button>
+    //                 </div>
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">캐시 초기화</h4>
+    //                         <p className="text-sm text-gray-500">시스템 캐시를 초기화합니다</p>
+    //                     </div>
+    //                     <button className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 flex items-center gap-2">
+    //                         <RefreshCw className="w-4 h-4" />
+    //                         초기화
+    //                     </button>
+    //                 </div>
+    //                 <div className="flex items-center justify-between">
+    //                     <div>
+    //                         <h4 className="text-sm font-medium text-gray-900">데이터 삭제</h4>
+    //                         <p className="text-sm text-gray-500">모든 데이터를 영구적으로 삭제합니다</p>
+    //                     </div>
+    //                     <button className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 flex items-center gap-2">
+    //                         <Trash2 className="w-4 h-4" />
+    //                         삭제
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
 
     // const renderNotificationSettings = () => (
     //     <div className="space-y-6">
@@ -420,7 +428,7 @@ const Settings = () => {
                     <div className="p-6 space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Jenkins User</label>
-                            <input type="url" id="JenkinsUser" value={SettingsForm.JenkinsUser} onChange={handleInputChange} name="JenkinsUser" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input type="url" id="JenkinsUser" value={SettingsForm.JenkinsUser ?? ""} onChange={handleInputChange} name="JenkinsUser" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Jenkins URL</label>
@@ -436,21 +444,30 @@ const Settings = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">GitHub API Token</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">SonarQubeUrl</label>
+                            <input type="url" id="SonarQubeUrl" value={SettingsForm.SonarQubeUrl} onChange={handleInputChange} name="SonarQubeUrl" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">SonarQube API Token</label>
                             <div className="relative">
-                                <input type="text" id="GitHubApiToken" value={SettingsForm.GitHubApiToken} onChange={handleInputChange} name="GitHubApiToken" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <input type="text" id="SonarQubeApiToken" value={SettingsForm.SonarQubeApiToken} onChange={handleInputChange} name="SonarQubeApiToken" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 <button className="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
                                     <Eye className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Docker Registry URL</label>
-                            <input type="url" id="DockerRegistryURL" value={SettingsForm.DockerRegistryURL} onChange={handleInputChange} name="DockerRegistryURL" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <label className="block text-sm font-medium text-gray-700 mb-2">JMeterUrl</label>
+                            <input type="url" id="JMeterUrl" value={SettingsForm.JMeterUrl} onChange={handleInputChange} name="JMeterUrl" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Kubernetes Config</label>
-                            <textarea id="KubernetesConfig" value={SettingsForm.KubernetesConfig} onChange={handleInputChange} name="KubernetesConfig" rows={5} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" />
+                            <label className="block text-sm font-medium text-gray-700 mb-2">JMeterApiToken</label>
+                            <div className="relative">
+                                <input type="text" id="JMeterApiToken" value={SettingsForm.JMeterApiToken} onChange={handleInputChange} name="JMeterApiToken" className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <button className="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
+                                    <Eye className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -460,8 +477,8 @@ const Settings = () => {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case "general":
-                return renderGeneralSettings();
+            // case "general":
+            //     return renderGeneralSettings();
             // case "notifications":
             //     return renderNotificationSettings();
             // case "security":
@@ -471,7 +488,7 @@ const Settings = () => {
             case "integrations":
                 return renderIntegrationSettings();
             default:
-                return renderGeneralSettings();
+                return renderIntegrationSettings();
         }
     };
 

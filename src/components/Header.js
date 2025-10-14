@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import NotificationDropdown from "./NotificationDropdown";
 
 const Header = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,16 +37,6 @@ const Header = () => {
 
             {/* 오른쪽 아이콘 영역 */}
             <div className="relative flex items-center gap-4">
-                {/* Notification */}
-                <div className="relative">
-                    <button onClick={() => setDropdownOpen(!dropdownOpen)} className="relative p-2 rounded-full hover:bg-gray-100 focus:outline-none">
-                        <Bell className="w-6 h-6 text-gray-600" />
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">{notifications.length}</span>
-                    </button>
-
-                    {dropdownOpen && <NotificationDropdown notifications={notifications} onClose={() => setDropdownOpen(false)} />}
-                </div>
-
                 {/* 사용자 정보 */}
                 {/* 사용자 정보 */}
                 <div className="relative" ref={userDropdownRef}>

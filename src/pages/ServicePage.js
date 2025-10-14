@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Server, ChevronRight } from "lucide-react";
 import classNames from "classnames";
-import axios from "axios";
+// import axios from "axios";
 import PipelineEditor from "../components/PipelineEditor";
 import DeploymentDetail from "./DeploymentDetail";
 import { authApi } from "../context/axios";
