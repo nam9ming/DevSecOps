@@ -9,14 +9,17 @@ const db = low(adapter);
 db.defaults({ users: [], refreshTokens: [] }).write();
 
 function normalize(s = {}) {
-    console.log("Normalizing settings:", s);
+    // console.log("Normalizing settings:", s);
     const set = s.SettingsForm;
     return {
         JenkinsUrl: s.JenkinsUrl || "",
         JenkinsUser: s.JenkinsUser || "",
         JenkinsApiToken: s.JenkinsApiToken || s.JenkinsApiToken || "", // 키 보정
+        SonarQubeUrl: s.SonarQubeUrl || "",
+        SonarQubeApiToken: s.SonarQubeApiToken || "",
+        JMeterUrl: s.JMeterUrl || "",
+        JMeterApiToken: s.JMeterApiToken || "",
         Timeout: typeof s.Timeout === "number" ? s.Timeout : 15000,
-        KubernetesConfig: s.KubernetesConfig, // 필요 시 유지
     };
 }
 
@@ -29,7 +32,7 @@ function normalize(s = {}) {
 
 class UserSettingsService extends EventEmitter {
     async getByUserId(userId) {
-        console.log("Getting settings for userId:", userId);
+        // console.log("Getting settings for userId:", userId);
         db.read();
         const u = db
             .get("users")
@@ -39,7 +42,7 @@ class UserSettingsService extends EventEmitter {
     }
 
     async updateByUserId(userId, patch) {
-        console.log("Updating settings with patch:", patch);
+        // console.log("Updating settings with patch:", patch);
         db.read();
         const u = db
             .get("users")
@@ -48,9 +51,9 @@ class UserSettingsService extends EventEmitter {
         if (!u) throw new Error("User not found");
 
         const current = u.setting || {};
-        console.log("Current settings:", current);
+        // console.log("Current settings:", current);
         const next = normalize({ ...current, ...patch });
-        console.log("Next settings:", next);
+        // console.log("Next settings:", next);
 
         db.get("users")
             .find({ id: String(userId) })

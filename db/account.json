@@ -12,7 +12,11 @@
       "setting": {
         "JenkinsUrl": "http://192.168.0.5:8080",
         "JenkinsUser": "ksh",
-        "JenkinsApiToken": "",
+        "JenkinsApiToken": "113d83f173076cdb42d5c26a73f002c569",
+        "SonarQubeUrl": "http://100.119.44.118:32000",
+        "SonarQubeApiToken": "squ_d79489398edc359f1f418f8c26754cdc5a024228",
+        "JMeterUrl": "",
+        "JMeterApiToken": "",
         "Timeout": 15000
       }
     },
@@ -34,8 +38,8 @@
     },
     {
       "id": "1754999296566",
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTQ5OTkyOTY1NjYiLCJpYXQiOjE3NTk1NzE2NTYsImV4cCI6MTc2MDE3NjQ1Nn0.IekmULJKjR38x8uLhPpgZ9fa9e3xc2rpDkuwEAhgwg8",
-      "createdAt": 1759571656070
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTQ5OTkyOTY1NjYiLCJpYXQiOjE3NjA0MTIzMjMsImV4cCI6MTc2MTAxNzEyM30.Mv2odiqVgW1ZnKQdx7L1ymEOpgSG3k3Al4nUky1NBaQ",
+      "createdAt": 1760412323407
     }
   ]
 }

@@ -19,6 +19,8 @@ let JenkinsUser = process.env.JENKINS_USER;
 
 db.defaults({ users: [], refreshTokens: [] }).write();
 
+// /api/setting
+
 // router.put("/inter", (req, res) => {
 //     const body = req.body || {};
 
@@ -54,9 +56,10 @@ db.defaults({ users: [], refreshTokens: [] }).write();
 
 router.get("/", async (req, res, next) => {
     try {
-        const conf = await userSettings.getByUserId(req.user.id);
+        const conf = await userSettings.getByUserId(req.query.user);
         res.json(conf);
     } catch (e) {
+        console.log(conf);
         next(e);
     }
 });

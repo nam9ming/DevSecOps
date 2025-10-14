@@ -1,8 +1,8 @@
 // routes/pipelineRoute.js
 const express = require("express");
 const router = express.Router();
-const axios = require("axios");
-const { JENKINS_URL, AUTH } = require("../config/jenkins");
+
+const { AUTH } = require("../config/jenkins");
 
 // axios instance
 
@@ -32,7 +32,7 @@ const pickEnv = (name) => {
 // CSRF crumb (미사용 환경 대비)
 const getCrumb = async () => {
     try {
-        const { data } = await jx.get("/crumbIssuer/api/json");
+        const { data } = await jenkins.get("/crumbIssuer/api/json");
         return { [data.crumbRequestField]: data.crumb };
     } catch {
         return {};
@@ -44,8 +44,9 @@ const getCrumb = async () => {
 // Job 목록 요약(서비스 단위, env별 상태)
 router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
-        const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color]" } });
+        const { jenkins } = req.clients;
+
+        const { data } = await jenkins.get("/api/json", { params: { tree: "jobs[name,color]" } });
         const serviceMap = {};
         for (const j of data.jobs ?? []) {
             const env = pickEnv(j.name);
@@ -69,9 +70,9 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
 // 특정 잡의 실행 이력
 router.get("/:jobName/executions", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
+        const { jenkins } = req.clients;
         const { jobName } = req.params;
-        const { data } = await jx.get(`/job/${encodeURIComponent(jobName)}/api/json`, {
+        const { data } = await jenkins.get(`/job/${encodeURIComponent(jobName)}/api/json`, {
             params: { tree: "builds[number,result,timestamp,duration]" },
         });
         res.json({ executions: data.builds || [] });
@@ -82,10 +83,11 @@ router.get("/:jobName/executions", authenticateToken, attachUserSetting, async (
 });
 
 // 특정 실행 상세 + 파이프라인(stage) 정보
-router.get("/:jobName/build/:execId", async (req, res) => {
+router.get("/:jobName/build/:execId", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const { jenkins } = req.clients;
         const { jobName, execId } = req.params;
-        const [buildRes, wfapiRes] = await Promise.all([jx.get(`/job/${encodeURIComponent(jobName)}/${execId}/api/json`), jx.get(`/job/${encodeURIComponent(jobName)}/${execId}/wfapi/describe`)]);
+        const [buildRes, wfapiRes] = await Promise.all([jenkins.get(`/job/${encodeURIComponent(jobName)}/${execId}/api/json`), jenkins.get(`/job/${encodeURIComponent(jobName)}/${execId}/wfapi/describe`)]);
         const buildInfo = buildRes.data || {};
         const stageInfo = wfapiRes.data || {};
         res.json({
@@ -102,12 +104,13 @@ router.get("/:jobName/build/:execId", async (req, res) => {
 // config.xml 읽기
 router.get("/config", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
+        const { jenkins } = req.clients;
+
         console.log(req.query);
         console.log(AUTH);
         const jobName = req.query.jobName;
         if (!jobName) return res.status(400).send("job 파라미터 필요");
-        const xml = await jx.get(`/job/${encodeURIComponent(jobName)}/config.xml`, {
+        const xml = await jenkins.get(`/job/${encodeURIComponent(jobName)}/config.xml`, {
             headers: { Accept: "application/xml" },
         });
         res.send(xml.data);
@@ -118,15 +121,17 @@ router.get("/config", authenticateToken, attachUserSetting, async (req, res) => 
 });
 
 // config.xml 저장
-router.post("/config", async (req, res) => {
+router.post("/config", authenticateToken, attachUserSetting, async (req, res) => {
     try {
+        const { jenkins } = req.clients;
+
         console.log(req.body);
         const jobName = req.query.job;
         console.log(req.body);
         if (!jobName) return res.status(400).send("job 파라미터 필요");
 
         const crumb = await getCrumb();
-        await jx.get(`/job/${encodeURIComponent(jobName)}/config.xml`, req.body, {
+        await jenkins.get(`/job/${encodeURIComponent(jobName)}/config.xml`, req.body, {
             headers: { "Content-Type": "application/xml; charset=utf-8", ...crumb },
         });
         res.send("Jenkins config 저장 성공");

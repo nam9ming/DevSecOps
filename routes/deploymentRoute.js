@@ -34,7 +34,7 @@ const mapBuildStatus = (b = {}) => {
 // CSRF crumb 얻기(미사용 환경 고려)
 const getCrumb = async () => {
     try {
-        const { data } = await jx.get("/crumbIssuer/api/json");
+        const { data } = await jenkins.get("/crumbIssuer/api/json");
         return { [data.crumbRequestField]: data.crumb };
     } catch {
         // crumb 미사용 환경일 수 있음
@@ -58,8 +58,9 @@ const mapNetworkError = (err) => {
 // Jenkins 잡 카탈로그(서비스별 dev/stage/prod 상태)
 router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
-        const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color]" } });
+        const { jenkins } = req.clients;
+
+        const { data } = await jenkins.get("/api/json", { params: { tree: "jobs[name,color]" } });
 
         const serviceMap = {};
         const envs = ["dev", "stage", "prod"];
@@ -77,7 +78,7 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
 
                 try {
                     // 잡 상세에서 ENV 파라미터별 최신 빌드 상태 계산
-                    const detail = await jx.get(`/job/${encodeURIComponent(service)}/api/json`, {
+                    const detail = await jenkins.get(`/job/${encodeURIComponent(service)}/api/json`, {
                         params: {
                             tree: "builds[number,result,building,timestamp,actions[parameters[name,value]]]",
                         },
@@ -116,11 +117,12 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
 
 // Jenkins job 삭제
 router.delete("/jobcatalog/:name", async (req, res) => {
+    const { jenkins } = req.clients;
     const raw = req.params.name || "";
     if (!raw) return res.status(400).json({ error: "name 파라미터가 필요합니다." });
 
     try {
-        const exists = await jx
+        const exists = await jenkins
             .get(`/job/${encodeURIComponent(raw)}/api/json`)
             .then(() => true)
             .catch((e) =>
@@ -137,7 +139,7 @@ router.delete("/jobcatalog/:name", async (req, res) => {
 
         const crumb = await getCrumb();
 
-        await jx.post(`/job/${encodeURIComponent(raw)}/doDelete`, null, {
+        await jenkins.post(`/job/${encodeURIComponent(raw)}/doDelete`, null, {
             headers: { ...crumb },
             maxRedirects: 0,
             validateStatus: (s) => (s >= 200 && s < 300) || s === 302 || s === 303,
@@ -162,15 +164,16 @@ router.delete("/jobcatalog/:name", async (req, res) => {
 // 빌드(배포) 트리거
 router.post("/deployments", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
+        const { jenkins } = req.clients;
         const { jobName, params } = req.body;
+
         if (!jobName) return res.status(400).json({ error: "jobName이 필요합니다." });
 
         const crumb = await getCrumb();
         const isParam = params && Object.keys(params).length > 0;
         const path = isParam ? `/job/${encodeURIComponent(jobName)}/buildWithParameters` : `/job/${encodeURIComponent(jobName)}/build`;
 
-        const resp = await jx.post(path, null, { params: params || {}, headers: { ...crumb } });
+        const resp = await jenkins.post(path, null, { params: params || {}, headers: { ...crumb } });
         const queueUrl = resp.headers?.location || null; // Jenkins 201/302 Location
 
         res.status(200).json({ message: "빌드 요청됨", jobName, queueUrl });
@@ -192,13 +195,14 @@ router.post("/deployments", authenticateToken, attachUserSetting, async (req, re
 // - 구형: /lastdeploy?service=<잡명>&kind=<lastCompletedBuild|lastSuccessfulBuild>
 router.get("/lastdeploy", authenticateToken, attachUserSetting, async (req, res) => {
     try {
-        const jx = createApiClient(req.userSetting);
+        const { jenkins } = req.clients;
+
         const job = (req.query.job || "").toString();
         const env = (req.query.env || "").toString().toLowerCase();
 
         // ✅ 단일 잡 + ENV 파라미터 기반
         if (job && env) {
-            const { data } = await jx.get(`/job/${encodeURIComponent(job)}/api/json`, {
+            const { data } = await jenkins.get(`/job/${encodeURIComponent(job)}/api/json`, {
                 params: {
                     tree: "builds[number,timestamp,result,building,actions[parameters[name,value]]]",
                 },
@@ -237,7 +241,7 @@ router.get("/lastdeploy", authenticateToken, attachUserSetting, async (req, res)
         }
 
         if (!env || env === "default") {
-            const { data } = await jx.get(`/job/${encodeURIComponent(job)}/lastBuild/api/json`);
+            const { data } = await jenkins.get(`/job/${encodeURIComponent(job)}/lastBuild/api/json`);
             if (!data?.timestamp) return res.json({ lastDeploy: null });
 
             const formatted = new Date(data.timestamp).toLocaleString("ko-KR", {
@@ -251,7 +255,7 @@ router.get("/lastdeploy", authenticateToken, attachUserSetting, async (req, res)
             });
         }
 
-        const { data } = await jx.get(`/job/${encodeURIComponent(job)}/api/json`, {
+        const { data } = await jenkins.get(`/job/${encodeURIComponent(job)}/api/json`, {
             params: {
                 tree: "builds[number,timestamp,result,building,actions[parameters[name,value]]]",
             },
