@@ -10,10 +10,11 @@
       "username": "123@123",
       "password": "$2b$10$B7Wf2f5ju00eY9Haalou3OWQVT87p5w75njo2tjJzf1zM4IvwKfsO",
       "setting": {
-        "JenkinsUrl": "http://192.168.0.5:8080",
-        "JenkinsUser": "ksh",
-        "JenkinsApiToken": "",
-        "Timeout": 15000
+        "JenkinsUrl": "http://172.23.128.1:8080",
+        "JenkinsUser": "admin",
+        "JenkinsApiToken": "117e61fdfc07f1f1a2aad35cf5d198a143",
+        "Timeout": 15000,
+        "KubernetesConfig": ""
       }
     },
     {
@@ -25,6 +26,20 @@
       "id": "1756960565156",
       "username": "test@test.com",
       "password": "$2b$10$hoxKkWM2kQSfAa4xy6vyr.UTEiZ.i.rG1wDaT7xz80kFQZuhhxdTu"
+    },
+    {
+      "id": "1760339785351",
+      "username": "nam@nam",
+      "password": "$2b$10$bgbvks/EcgpJSssqqXG3L.aSHTvafHFionW//WyJpcEAChAu7o24m",
+      "setting": {
+        "JenkinsUrl": "http://172.23.128.1:8080",
+        "JenkinsUser": "admin",
+        "JenkinsApiToken": "117e61fdfc07f1f1a2aad35cf5d198a143",
+        "Timeout": 15000,
+        "KubernetesConfig": "",
+        "SonarUrl": "http://172.23.140.28:32000",
+        "SonarToken": "squ_d79489398edc359f1f418f8c26754cdc5a024228"
+      }
     }
   ],
   "refreshTokens": [
@@ -34,8 +49,13 @@
     },
     {
       "id": "1754999296566",
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTQ5OTkyOTY1NjYiLCJpYXQiOjE3NTk1NzE2NTYsImV4cCI6MTc2MDE3NjQ1Nn0.IekmULJKjR38x8uLhPpgZ9fa9e3xc2rpDkuwEAhgwg8",
-      "createdAt": 1759571656070
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTQ5OTkyOTY1NjYiLCJpYXQiOjE3NjAyNjgwNzgsImV4cCI6MTc2MDg3Mjg3OH0.EamwbRp6eStyvjMFptaw01-fAU-A6lazZKyHtWjxonI",
+      "createdAt": 1760268078228
+    },
+    {
+      "id": "1760339785351",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAzMzk3ODUzNTEiLCJpYXQiOjE3NjAzMzk3OTUsImV4cCI6MTc2MDk0NDU5NX0.U34iJ199mcRJaRrpfx0idRBK3MCmGBtodeVA6ZlsQJc",
+      "createdAt": 1760339795057
     }
   ]
 }

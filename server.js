@@ -60,6 +60,7 @@ app.get("/", (req, res) => {
 // 신규 API 경로
 app.use("/api/pipeline", pipelineRoute);
 app.use("/api/deployment", deploymentRoute);
+app.use("/api/deploy", deploymentRoute);  
 app.use("/api/perf", perfRoute);
 app.use("/api/jobCreate", createjobRoute);
 

@@ -11,14 +11,14 @@ function createApiClient(conf = {}) {
     const ax = axios.create({
         baseURL,
         timeout: conf.Timeout || 15000,
-        ...(conf.Username && conf.ApiToken ? { auth: { username: conf.Username, password: conf.ApiToken } } : {}),
+        ...(conf.JenkinsUser && conf.JenkinsApiToken ? { auth: { username: conf.JenkinsUser, password: conf.JenkinsApiToken } } : {}),
         headers: { "Content-Type": "application/json" },
     });
 
     // Username 없이 토큰만 있으면 Bearer 헤더로
-    if (!(conf.Username && conf.ApiToken) && conf.ApiToken) {
+    if (!(conf.JenkinsUser && conf.JenkinsApiToken) && conf.JenkinsApiToken) {
         ax.interceptors.request.use((cfg) => {
-            if (!cfg.headers.Authorization) cfg.headers.Authorization = `Bearer ${conf.ApiToken}`;
+            if (!cfg.headers.Authorization) cfg.headers.Authorization = `Bearer ${conf.JenkinsApiToken}`;
             return cfg;
         });
     }
