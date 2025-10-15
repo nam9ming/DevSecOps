@@ -34,8 +34,8 @@ function createAxios(conf = {}) {
     // ✅ 인증 설정 구분
     switch (conf.authMode) {
         case "basic":
-            if (conf.JenkinsUser && conf.token) {
-                ax.defaults.auth = { username, password: conf.token };
+            if (conf.username && conf.token) {
+                ax.defaults.auth = { username: conf.username, password: conf.token };
             }
             break;
 
