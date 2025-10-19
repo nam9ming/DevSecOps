@@ -1,85 +1,128 @@
-import React, { useEffect, useState } from "react";
+// ServicePage.jsx (핵심 부분만)
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Server, ChevronRight } from "lucide-react";
-import classNames from "classnames";
-// import axios from "axios";
-import PipelineEditor from "../components/PipelineEditor";
+import { Server } from "lucide-react";
 import DeploymentDetail from "./DeploymentDetail";
+import Textarea from "../components/Textarea";
 import { authApi } from "../context/axios";
 
-const environments = [
-    { name: "Dev", label: "DEV 환경", status: "Success", updatedAt: "2025.07.08 15:30" },
-    { name: "Stage", label: "STAGE 환경", status: "Building", updatedAt: "2025.07.08 15:12" },
-    { name: "Prod", label: "PROD 환경", status: "Pending", updatedAt: "2025.07.07 22:02" },
-];
+const ENV_LIST = ["dev", "stage", "prod"];
 
-const statusColor = {
-    Success: "bg-green-100 text-green-700",
-    Failed: "bg-red-100 text-red-700",
-    Building: "bg-blue-100 text-blue-700",
-    Pending: "bg-yellow-100 text-yellow-700",
-};
+export default function ServicePage() {
+  const { serviceId } = useParams();
+  const [serviceDisplayName, setServiceDisplayName] = useState("");
+  const [envData, setEnvData] = useState({
+    dev: { status: "Pending", updatedAt: null },
+    stage: { status: "Pending", updatedAt: null },
+    prod: { status: "Pending", updatedAt: null },
+  });
+  const [loading, setLoading] = useState(true);
 
-const ServicePage = () => {
-    const { serviceId } = useParams();
-    const [serviceDisplayName, setServiceDisplayName] = useState("");
+  // 서비스 표시 이름
+  useEffect(() => {
+    authApi
+      .get("http://localhost:4000/api/jenkins/services")
+      .then((res) => {
+        const found = res.data.services.find((s) => s.name === serviceId);
+        const pretty = (found?.name || serviceId || "Service")
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        setServiceDisplayName(pretty);
+      })
+      .catch(() => setServiceDisplayName("Service"));
+  }, [serviceId]);
 
-    useEffect(() => {
-        authApi
-            .get("http://localhost:4000/api/jenkins/services")
-            .then((res) => {
-                // 전체 서비스명 리스트 확인
-                console.log("서비스 목록:", res.data.services);
-                // 정확히 일치하는 job 찾기
-                const found = res.data.services.find((s) => s.name === serviceId);
-                if (found && found.name) {
-                    // prettier
-                    const prettyName = found.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-                    setServiceDisplayName(prettyName);
-                } else {
-                    // 못 찾으면 fallback
-                    setServiceDisplayName(serviceId ? serviceId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Service");
-                }
+  // 배포 로그(상태/시간) 로딩
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      try {
+        setLoading(true);
+
+        // 1) 상태: /jobcatalog에서 한 번에
+        const cat = await authApi.get("http://localhost:4000/api/deployment/jobcatalog");
+        const me = (cat.data || []).find((j) => j.name === serviceId);
+
+        // 2) 시간: /lastdeploy를 env별로 병렬 조회
+        const timeReqs = ENV_LIST.map((env) =>
+          authApi
+            .get("http://localhost:4000/api/deployment/lastdeploy", {
+              params: { job: serviceId, env },
             })
-            .catch((err) => {
-                console.error("서비스명 조회 실패:", err);
-                setServiceDisplayName("Service");
-            });
-    }, [serviceId]);
+            .then((r) => [env, r.data?.lastDeploy || null])
+            .catch(() => [env, null])
+        );
+        const timePairs = await Promise.all(timeReqs);
+        const times = Object.fromEntries(timePairs); // { dev: "2025.07...", stage: ... }
 
-    return (
-        <div className="p-8 bg-gray-50 min-h-[calc(100vh-120px)]">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">{serviceDisplayName || "Service"}</h1>
-            <div className="">
-                <h2 className="text-2xl font-bold "> 배포 관리 </h2>
-                <DeploymentDetail />
-            </div>
+        if (!mounted) return;
 
-            <h2 className="text-2xl font-bold mb-4"> 배포 로그 </h2>
-            <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {environments.map((env) => (
-                        <Link key={env.name} to={`/service/${serviceId}/${env.name.toLowerCase()}`} className="flex flex-col justify-between p-5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border">
-                            <div className="flex items-center gap-3 mb-3 text-gray-700 font-medium">
-                                <Server className="w-5 h-5 text-blue-500" />
-                                {env.label}
-                            </div>
-                            <div className="flex justify-between items-end mt-auto">
-                                <span className={classNames("px-3 py-1 text-xs font-semibold rounded-full", statusColor[env.status])}>{env.status}</span>
-                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <p className="mt-2 text-xs text-gray-500">Last updated: {env.updatedAt}</p>
-                        </Link>
-                    ))}
+        setEnvData({
+          dev: { status: me?.statuses?.dev || "Pending", updatedAt: times.dev },
+          stage: { status: me?.statuses?.stage || "Pending", updatedAt: times.stage },
+          prod: { status: me?.statuses?.prod || "Pending", updatedAt: times.prod },
+        });
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    if (serviceId) load();
+    return () => {
+      mounted = false;
+    };
+  }, [serviceId]);
+
+  const environments = useMemo(
+    () => [
+      { name: "Dev", label: "DEV 환경", ...envData.dev },
+      { name: "Stage", label: "STAGE 환경", ...envData.stage },
+      { name: "Prod", label: "PROD 환경", ...envData.prod },
+    ],
+    [envData]
+  );
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-[calc(100vh-120px)]">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        {serviceDisplayName || "Service"}
+      </h1>
+
+      <div className="">
+        <h2 className="text-2xl font-bold "> 배포 관리 </h2>
+        <DeploymentDetail />
+      </div>
+
+      <h2 className="text-2xl font-bold mb-4"> 배포 로그 </h2>
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+        {loading ? (
+          <div className="text-sm text-gray-500">불러오는 중…</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {environments.map((env) => (
+              <Link
+                key={env.name}
+                to={`/service/${serviceId}/${env.name.toLowerCase()}`}
+                className="flex flex-col justify-between p-5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border"
+              >
+                <div className="flex items-center gap-3 mb-3 text-gray-700 font-medium">
+                  <Server className="w-5 h-5 text-blue-500" />
+                  {env.label}
                 </div>
-            </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Last updated: {env.updatedAt || "-"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
-            <div className="mt-10">
-                <h2 className="text-2xl font-bold mb-4">파이프라인 </h2>
-                <PipelineEditor jobName={serviceId} />
-            </div>
-        </div>
-    );
-};
-
-export default ServicePage;
+      <div className="mt-10">
+        <h2 className="text-2xl font-bold mb-4">파이프라인 </h2>
+        <Textarea jobName={serviceId} />
+      </div>
+    </div>
+  );
+}

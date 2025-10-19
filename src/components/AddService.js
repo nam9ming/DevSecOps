@@ -1,35 +1,140 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { authApi } from "../context/axios";
-
-const ProxyURL = process.env.REACT_APP_SERVER_URL || "http://localhost:4000";
 
 function AddService({ open, onClose, onCreated }) {
     const [jobName, setJobName] = useState("");
     const [pipelineScript, setPipelineScript] = useState(
         `pipeline {
-    agent any
-  
-    parameters {
-        choice(
-        name: 'ENV',
-        choices: ['dev', 'stage', 'prod'],
-        description: '배포 대상'
-    )
+  agent any
+  options { timestamps() }
+  tools { jdk 'JDK11' }
+
+  parameters {
+    choice(name: 'ENV', choices: ['dev','stage','prod'], description: '배포 대상 네임스페이스')
+    string(name: 'APP', defaultValue: 'myapp', description: 'K8s Deployment/Service 이름')
+    string(name: 'IMAGE_REPO', defaultValue: 'my-flask-app', description: '이미지 리포지토리명(태그 제외)')
+  }
+
+  environment {
+    NS  = "\${params.ENV}"
+    APP = "\${params.APP}"
+    IMG = "\${params.IMAGE_REPO}:\${BUILD_NUMBER}"
   }
 
   stages {
-    stage('hello') {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    stage('Build Docker Image') {
       steps {
-        echo "hello 👋  selected ENV = \${params.ENV}"
+        bat 'docker version'
+        bat "docker build -t %IMG% ."
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig-local', variable: 'KCFG')]) {
+          bat """
+            kubectl --kubeconfig=%KCFG% config current-context
+            kubectl --kubeconfig=%KCFG% get nodes
+            kubectl --kubeconfig=%KCFG% create ns %NS% 2>NUL
+            kubectl --kubeconfig=%KCFG% -n %NS% apply -f k8s/deployment.yaml
+            kubectl --kubeconfig=%KCFG% -n %NS% apply -f k8s/service.yaml
+            kubectl --kubeconfig=%KCFG% -n %NS% set image deploy/%APP% %APP%=%IMG%
+            kubectl --kubeconfig=%KCFG% -n %NS% rollout status deploy/%APP% --timeout=180s
+            kubectl --kubeconfig=%KCFG% -n %NS% get svc %APP% -o wide
+          """
+        }
+      }
+    }
+
+    stage('Resolve tools') {
+      steps {
+        script {
+          env.SCANNER_HOME = tool name: 'SQScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+        }
+      }
+    }
+
+    stage('Tool Check') {
+      steps {
+        bat 'java -version'
+        bat "\"%SCANNER_HOME%/bin/sonar-scanner.bat\" -v"
+      }
+    }
+
+    stage('Test - JMeter (Docker)') {
+      steps {
+        bat """
+          if exist jmeter_%BUILD_NUMBER% rmdir /S /Q jmeter_%BUILD_NUMBER% 2>NUL
+          mkdir jmeter_%BUILD_NUMBER%
+        """
+        bat """
+          docker run --rm -v "%CD%:/tests" -w /tests alpine/jmeter:5.6.3 ^
+            -n -t tests/smoke.jmx ^
+            -l jmeter_%BUILD_NUMBER%/results.jtl ^
+            -e -o jmeter_%BUILD_NUMBER%/html
+        """
+        publishHTML(target: [
+          reportDir: "jmeter_\${env.BUILD_NUMBER}/html",
+          reportFiles: 'index.html',
+          reportName: 'JMeter Report',
+          keepAll: true,
+          alwaysLinkToLastBuild: true
+        ])
+        script {
+          def stats = readJSON file: "jmeter_\${env.BUILD_NUMBER}/html/statistics.json"
+          def t = stats['Total'] ?: stats['ALL'] ?: stats
+          def summary = [
+            samples   : t.sampleCount,
+            errorPct  : t.errorPercentage,
+            avgMs     : t.meanResTime,
+            p90Ms     : t.p90,
+            throughput: t.throughput
+          ]
+          writeJSON file: 'jmeter-summary.json', json: summary, pretty: 2
+        }
+        archiveArtifacts artifacts: "jmeter_\${env.BUILD_NUMBER}/**,jmeter-summary.json", fingerprint: true
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        withSonarQubeEnv('MySonar') {
+          withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+            script {
+              def pk = env.JOB_NAME.replaceAll('[^A-Za-z0-9._-]', '-')
+              bat """
+                "\${tool 'SQScanner'}/bin/sonar-scanner.bat" ^
+                  -Dsonar.projectKey=\${pk} ^
+                  -Dsonar.projectName=\${pk} ^
+                  -Dsonar.sources=. ^
+                  -Dsonar.token=%SONAR_TOKEN% ^
+                  -Dsonar.host.url=http://localhost:9000
+              """
+            }
+          }
+        }
+      }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 2, unit: 'MINUTES') {
+          script {
+            def qg = waitForQualityGate()
+            writeJSON file: 'sonar-gate.json', json: [status: qg.status], pretty: 2
+          }
+          archiveArtifacts artifacts: 'sonar-gate.json', fingerprint: true
+        }
       }
     }
   }
 
   post {
-    always {
-      echo "Pipeline finished: \${currentBuild.currentResult}"
-    }
+    always { echo "Pipeline finished. ENV=\${env.NS}, IMG=\${env.IMG}" }
   }
 }`
     );
