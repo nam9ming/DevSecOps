@@ -116,7 +116,7 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
 });
 
 // Jenkins job 삭제
-router.delete("/jobcatalog/:name", async (req, res) => {
+router.delete("/jobcatalog/:name", authenticateToken, attachUserSetting,async (req, res) => {
     const { jenkins } = req.clients;
     const raw = req.params.name || "";
     if (!raw) return res.status(400).json({ error: "name 파라미터가 필요합니다." });

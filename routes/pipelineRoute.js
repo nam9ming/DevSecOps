@@ -69,17 +69,75 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
 
 // 특정 잡의 실행 이력
 router.get("/:jobName/executions", authenticateToken, attachUserSetting, async (req, res) => {
-    try {
-        const { jenkins } = req.clients;
-        const { jobName } = req.params;
-        const { data } = await jenkins.get(`/job/${encodeURIComponent(jobName)}/api/json`, {
-            params: { tree: "builds[number,result,timestamp,duration]" },
-        });
-        res.json({ executions: data.builds || [] });
-    } catch (err) {
-        console.error("🔴 executions 실패:", err.message);
-        res.status(500).json({ error: "실행 이력 조회 실패" });
+  try {
+    const { jenkins } = req.clients;
+    const job = (req.params.jobName || "").toString();
+    const env = (req.query.env || "").toString().toLowerCase(); // dev | stage | prod
+    const limit = Math.min(parseInt(req.query.limit || "20", 10), 50);
+    const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
+
+    if (!job) return res.status(400).json({ error: "job 파라미터가 필요합니다." });
+    if (!env) return res.status(400).json({ error: "env 쿼리 파라미터가 필요합니다.(dev|stage|prod)" });
+
+    // Jenkins에서 빌드 목록을 가져올 때 필요한 필드만 받도록 tree 압축
+    const { data } = await jenkins.get(`/job/${encodeURIComponent(job)}/api/json`, {
+      params: {
+        tree: "builds[number,result,building,timestamp,duration,fullDisplayName,actions[parameters[name,value]]]",
+      },
+    });
+    
+    const builds = Array.isArray(data?.builds) ? data.builds : [];
+
+    // ENV 파라미터로 필터링
+    const filtered = builds.filter((b) => {
+      const actions = Array.isArray(b.actions) ? b.actions : [];
+      const params = actions.flatMap((a) => a?.parameters || []);
+      const p = params.find((p) => p?.name === "ENV");
+      return p && String(p.value).toLowerCase() === env;
+    });
+
+    // 최신순 정렬(번호 내림차순) → 페이징
+    filtered.sort((a, b) => b.number - a.number);
+    const sliced = filtered.slice(offset, offset + limit);
+
+    // 결과 매핑
+    const mapResult = (r, building, inQueue) => {
+        if (inQueue) return "Queued";
+        if (building) return "Building";
+        const R = String(r || "").toUpperCase();
+        if (R === "SUCCESS")   return "Success";
+        if (R === "FAILURE")   return "Failed";
+        if (R === "UNSTABLE")  return "Unstable";
+        if (R === "ABORTED")   return "Aborted";
+        if (R === "NOT_BUILT") return "NotBuilt"; // 컴파일 실패/미빌드 등
+        if (R === "UNKNOWN" || R === "") return "Unknown";
+        return "Pending";
+    };
+
+    const executions = sliced.map((b) => ({
+      number: b.number,
+      result: mapResult(b.result, b.building),
+      building: !!b.building,
+      timestamp: b.timestamp || null,
+      duration: b.duration || 0,
+      fullDisplayName: b.fullDisplayName || `#${b.number}`,
+    }));
+
+    return res.json({
+      job,
+      env,
+      count: filtered.length,
+      offset,
+      limit,
+      executions,
+    });
+  } catch (err) {
+    if (err.response?.status === 404) {
+      return res.json({ job: req.params.job, env: req.query.env, count: 0, executions: [] });
     }
+    console.error("🔴 executions 조회 실패:", err.message);
+    return res.status(500).json({ error: "실행 이력 조회 실패" });
+  }
 });
 
 // 특정 실행 상세 + 파이프라인(stage) 정보
@@ -99,6 +157,25 @@ router.get("/:jobName/build/:execId", authenticateToken, attachUserSetting, asyn
         console.error("🔴 build 상세 실패:", err.message);
         res.status(500).json({ error: "빌드 상세 조회 실패" });
     }
+});
+
+router.get("/:jobName/build/:execId/console", authenticateToken, attachUserSetting, async (req, res) => {
+  try {
+    const { jenkins } = req.clients;
+    const { jobName, execId } = req.params;
+
+    // 전체 로그: /consoleText
+    const { data } = await jenkins.get(`/job/${encodeURIComponent(jobName)}/${execId}/consoleText`, {
+      responseType: "text",
+      headers: { Accept: "text/plain" },
+      // timeout: 20000, // 필요시
+    });
+
+    res.type("text/plain").send(data || "");
+  } catch (err) {
+    console.error("🔴 consoleText 조회 실패:", err.message);
+    res.status(500).json({ error: "콘솔 로그 조회 실패" });
+  }
 });
 
 // config.xml 읽기
@@ -126,33 +203,17 @@ router.post("/config", authenticateToken, attachUserSetting, async (req, res) =>
         const { jenkins } = req.clients;
 
         console.log(req.body);
-        const jobName = req.query.job;
+        const jobName = req.query.jobName;
         console.log(req.body);
         if (!jobName) return res.status(400).send("job 파라미터 필요");
 
         const crumb = await getCrumb();
-        await jenkins.get(`/job/${encodeURIComponent(jobName)}/config.xml`, req.body, {
+        await jenkins.post(`/job/${encodeURIComponent(jobName)}/config.xml`, req.body, {
             headers: { "Content-Type": "application/xml; charset=utf-8", ...crumb },
         });
         res.send("Jenkins config 저장 성공");
     } catch (err) {
         res.status(500).send("Jenkins config 저장 실패: " + err.message);
-    }
-});
-
-/** ---------- 레거시 호환 라우트(기존 프런트 유지용) ---------- **/
-
-// 기존: GET /api/jenkins/services  (간단 목록)
-router.get("/services", authenticateToken, attachUserSetting, async (req, res) => {
-    try {
-        // console.log("🔵 /services 실행");
-        const jx = createApiClient(req.userSetting);
-        // console.log(req.userSetting);
-        const { data } = await jx.get("/api/json", { params: { tree: "jobs[name,color]" } });
-        const services = (data.jobs || []).map((j) => ({ name: j.name, status: j.color }));
-        res.json({ services });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
     }
 });
 
