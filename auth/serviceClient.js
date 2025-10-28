@@ -13,7 +13,7 @@ function createServiceClients(setting) {
         SonarQubeApiToken: setting.SonarQubeApiToken || "",
         JMeterUrl: setting.JMeterUrl || "",
         JMeterToken: setting.JMeterToken || "",
-        Timeout: Number.isFinite(setting.Timeout) ? setting.Timeout : 15000,
+        Timeout: Number.isFinite(setting.Timeout) ? setting.Timeout : 5000,
     };
 
     // Jenkins: Basic 또는 Bearer(사용자 선택 가능)

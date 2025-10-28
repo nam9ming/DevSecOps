@@ -22,7 +22,7 @@ function createAxios(conf = {}) {
     // 기본 axios 인스턴스 생성
     const ax = axios.create({
         baseURL: (conf.baseURL || "").replace(/\/+$/, ""), // URL 끝 슬래시 제거
-        timeout: conf.timeout || 15000,
+        timeout: conf.timeout || 1000,
         headers: {
             "Content-Type": "application/json",
             ...conf.defaultHeaders,

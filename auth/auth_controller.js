@@ -12,6 +12,10 @@ const FileSync = require("lowdb/adapters/FileSync");
 const adapter = new FileSync("db/account.json");
 const db = low(adapter);
 
+const { authenticateToken } = require("../auth/auth_middleware");
+const attachUserSetting = require("../middleware/attachUserSetting");
+const { createApiClient } = require("../auth/axiosClient");
+
 // DB 초기화(최초 1회)
 db.defaults({ users: [], refreshTokens: [] }).write();
 
@@ -46,7 +50,9 @@ router.post("/register", async (req, res) => {
 // 로그인
 router.post("/login", async (req, res) => {
     const { username, password } = req.body || {};
-    console.log(req.body);
+
+    db.read();
+
     const user = db.get("users").find({ username }).value();
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -58,7 +64,8 @@ router.post("/login", async (req, res) => {
     const refreshToken = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
     let UserData = db.get("users").find({ id: user.id }).get("setting").value();
 
-    console.log(UserData);
+    console.log("asd", UserData);
+
     // 기존 토큰 제거 후 새로 저장
     db.get("refreshTokens").remove({ id: uid }).write();
     db.get("refreshTokens")
@@ -80,7 +87,8 @@ router.post("/login", async (req, res) => {
 });
 
 // Access Token 재발급
-router.post("/refresh", (req, res) => {
+router.post("/refresh", async (req, res) => {
+    db.read();
     const rt = req.cookies?.refreshToken;
     if (!rt) return res.status(401).send("No refresh");
     try {
@@ -95,14 +103,18 @@ router.post("/refresh", (req, res) => {
 });
 
 // 로그아웃
-router.post("/logout", (req, res) => {
+router.post("/logout", authenticateToken, attachUserSetting, async (req, res) => {
+    db.read();
+    console.log("Logout request received");
+    console.log(req.cookies);
     const { refreshToken } = req.cookies || {};
-    if (refreshToken) {
-        db.get("refreshTokens")
-            .remove((t) => t === refreshToken)
-            .write();
-    }
-    res.clearCookie("refreshToken");
+    // if (refreshToken) {
+    //     console.lo
+    //     db.get("refreshTokens")
+    //         .remove((t) => t === refreshToken)
+    //         .write();
+    // }
+    // res.clearCookie("refreshToken");
     res.sendStatus(204);
 });
 

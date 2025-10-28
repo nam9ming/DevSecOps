@@ -104,6 +104,10 @@ app.get("/api/profile", authenticateToken, (req, res) => {
 //     });
 //     next();
 // });
+app.use((err, req, res, next) => {
+    const code = err.status || 500;
+    res.status(code).json({ error: err.message || "Server error" });
+});
 
 // 루트 요청 처리
 app.listen(port, () => {

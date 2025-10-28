@@ -10,13 +10,6 @@ const userSettings = require("../userSettings.service");
 const { authenticateToken } = require("../auth/auth_middleware");
 const attachUserSetting = require("../middleware/attachUserSetting");
 
-let JenkinsUrl = process.env.JENKINS_URL;
-let JenkinsApiToken = process.env.JENKINS_API_TOKEN;
-let GithubApiToken = process.env.GITHUB_API_TOKEN;
-let DockerRegistryUrl = process.env.DOCKER_REGISTRY_URL;
-let KubernetesConfig = process.env.KUBERNETES_CONFIG;
-let JenkinsUser = process.env.JENKINS_USER;
-
 db.defaults({ users: [], refreshTokens: [] }).write();
 
 // /api/setting
@@ -54,9 +47,10 @@ db.defaults({ users: [], refreshTokens: [] }).write();
 //     });
 // });
 
-router.get("/", async (req, res, next) => {
+router.get("/", authenticateToken, attachUserSetting, async (req, res, next) => {
     try {
         const conf = await userSettings.getByUserId(req.query.user);
+        console.log("Fetched settings:", conf);
         res.json(conf);
     } catch (e) {
         console.log(conf);
@@ -64,10 +58,12 @@ router.get("/", async (req, res, next) => {
     }
 });
 
-router.put("/inter", async (req, res, next) => {
+router.put("/inter", authenticateToken, attachUserSetting, async (req, res, next) => {
     try {
         // console.log("body =", req.body);
         const updated = await userSettings.updateByUserId(req.body.user.id, req.body.SettingsForm);
+        const conf = await userSettings.getByUserId(req.body.user.id);
+        console.log("sss", conf);
         // console.log("Updated settings:", updated);
         res.json("update:", updated);
     } catch (e) {
