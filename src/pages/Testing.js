@@ -143,7 +143,7 @@ export default function Testing() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">테스트 결과</h1>
+            {/* <h1 className="text-2xl font-bold">보안 리포트</h1> */}
             {err ? <div className="text-red-600 text-sm">에러: {err}</div> : null}
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

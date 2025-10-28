@@ -15,6 +15,7 @@ import Testing from "./pages/Testing";
 import Settings from "./pages/Setting";
 import Login from "./pages/Login";
 import Service from "./pages/service";
+import { Navigate } from "react-router-dom";
 import { useAttachInterceptors } from "./context/axios";
 import { useEffect } from "react";
 import { bootAuth } from "./context/authBoot"; // 새로고침시 토큰 재발급 시도
@@ -22,49 +23,64 @@ import { bootAuth } from "./context/authBoot"; // 새로고침시 토큰 재발�
 // 다른 페이지들 import
 
 // 보호된 라우트 컴포넌트
-// const ProtectedRoute = ({ children }) => {
-//     const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
 
-//     if (loading) {
-//         return (
-//             <div className="min-h-screen flex items-center justify-center">
-//                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-//             </div>
-//         );
-//     }
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
-//     return isAuthenticated ? children : <Navigate to="/login" replace />;
-// };
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
-// // 로그인 페이지용 라우트 컴포넌트
-// const PublicRoute = ({ children }) => {
-//     const { isAuthenticated, loading } = useAuth();
+// 로그인 페이지용 라우트 컴포넌트
+const PublicRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
 
-//     if (loading) {
-//         return (
-//             <div className="min-h-screen flex items-center justify-center">
-//                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-//             </div>
-//         );
-//     }
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
-//     return isAuthenticated ? <Navigate to="/" replace /> : children;
-// };
+    return isAuthenticated ? <Navigate to="/" replace /> : children;
+};
 
 function AppRoutes() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<Layout />}>
+                <Route
+                    path="/login"
+                    element={
+                        <PublicRoute>
+                            <Login />
+                        </PublicRoute>
+                    }
+                />
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute>
+                            <Layout />
+                        </ProtectedRoute>
+                    }
+                >
                     <Route index element={<Dashboard />} />
-                    <Route path="service/:serviceId" element={<ServicePage />} />
-                    <Route path="service/:serviceId/env/:envId" element={<EnvPage />} />
-                    <Route path="service/:serviceId/:env" element={<EnvironmentExecutions />} />
-                    <Route path="service/:serviceId/:env/execution/:execId" element={<ExecutionDetail />} />
+                    <Route path="/service/:serviceId" element={<ServicePage />} />
+                    <Route path="/service/:serviceId/env/:envId" element={<EnvPage />} />
+                    <Route path="/service/:serviceId/:env" element={<EnvironmentExecutions />} />
+                    <Route path="/service/:serviceId/:env/execution/:execId" element={<ExecutionDetail />} />
                     <Route path="repositories" element={<Repositories />} />
                     <Route path="pipelines" element={<Pipelines />} />
-                    <Route path="deployments" element={<Deployments />} />
-                    <Route path="deployments/:serviceId/" element={<DeploymentDetail />} />
+                    <Route path="/deployments" element={<Deployments />} />
+                    <Route path="/deployments/:serviceId/" element={<DeploymentDetail />} />
                     <Route path="security" element={<Security />} />
                     <Route path="testing" element={<Testing />} />
                     <Route path="settings" element={<Settings />} />

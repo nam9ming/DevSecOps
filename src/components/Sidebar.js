@@ -6,11 +6,11 @@ import { GitBranch, Shield, Bug, Settings, Package } from "lucide-react";
 
 const menuItems = [
     // { label: '대시보드', path: '/', icon: <Activity size={18} /> }, // 삭제됨
-    { label: "저장소", path: "/repositories", icon: <GitBranch size={18} /> },
+    // { label: "저장소", path: "/repositories", icon: <GitBranch size={18} /> },
     // { label: "파이프라인", path: "/pipelines", icon: <Zap size={18} /> },
     // { label: "배포", path: "/deployments", icon: <Server size={18} /> },
-    { label: "보안 리포트", path: "/security", icon: <Shield size={18} /> },
-    { label: "테스트 결과", path: "/testing", icon: <Bug size={18} /> },
+    { label: "테스트 결과", path: "/security", icon: <Shield size={18} /> },
+    { label: "보안 리포트", path: "/testing", icon: <Bug size={18} /> },
     { label: "서비스", path: "/service", icon: <Package size={18} /> },
     { label: "설정", path: "/settings", icon: <Settings size={18} /> },
 ];

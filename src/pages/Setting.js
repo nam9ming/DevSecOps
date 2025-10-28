@@ -25,6 +25,7 @@ const Settings = () => {
     useEffect(() => {
         console.log("Fetching setting info for user:", user);
         authApi.get(`http://localhost:4000/api/setting?user=${user.id}`).then((response) => setSettingsForm(response.data));
+        console.log("Current SettingsForm:", SettingsForm);
     }, []);
 
     // const { JenkinsUrl, JenkinsApiToken, GitHubApiToken, DockerRegistryURL, KubernetesConfig } = SettingsForm;
@@ -74,12 +75,12 @@ const Settings = () => {
     //     dateFormat: "YYYY-MM-DD",
     // });
 
-    const [integrations, setIntegrations] = useState({
-        jenkins: true,
-        github: true,
-        docker: false,
-        kubernetes: true,
-    });
+    // const [integrations, setIntegrations] = useState({
+    //     jenkins: true,
+    //     github: true,
+    //     docker: false,
+    //     kubernetes: true,
+    // });
 
     // const handleNotificationChange = (key) => {
     //     console.log("알림 변경:", key);
@@ -103,12 +104,12 @@ const Settings = () => {
     //     }));
     // };
 
-    const handleIntegrationChange = (key) => {
-        setIntegrations((prev) => ({
-            ...prev,
-            [key]: !prev[key],
-        }));
-    };
+    // const handleIntegrationChange = (key) => {
+    //     setIntegrations((prev) => ({
+    //         ...prev,
+    //         [key]: !prev[key],
+    //     }));
+    // };
 
     const tabs = [
         // { id: "general", name: "일반", icon: SettingsIcon },
@@ -385,7 +386,7 @@ const Settings = () => {
 
     const renderIntegrationSettings = () => (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">서비스 연동</h3>
                 </div>
@@ -418,7 +419,7 @@ const Settings = () => {
                         </div>
                     ))}
                 </div>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
@@ -504,27 +505,6 @@ const Settings = () => {
                     <Save className="w-4 h-4" />
                     설정 저장
                 </button>
-            </div>
-
-            {/* 탭 네비게이션 */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="border-b border-gray-200">
-                    <nav className="flex space-x-8 px-6">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
-                                >
-                                    <Icon className="w-4 h-4" />
-                                    {tab.name}
-                                </button>
-                            );
-                        })}
-                    </nav>
-                </div>
             </div>
 
             {/* 탭 콘텐츠 */}

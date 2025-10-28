@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const Header = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -9,6 +10,7 @@ const Header = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const userDropdownRef = useRef(null);
+    const location = useLocation();
 
     const notifications = ["📦 Payment Service 배포 완료", "⚠️ Shopping Service Stage 환경 실패", "✅ User Service 테스트 완료"];
 
@@ -16,6 +18,23 @@ const Header = () => {
         logout();
         navigate("/login");
     };
+
+    const pageNames = {
+        "/": "홈",
+        "/dashboard": "대시보드",
+        "/settings": "설정",
+        "/testing": "보안 리포트",
+        "/security": "테스트 결과",
+        "/service": "서비스",
+        "/profile": "프로필",
+    };
+
+    // { label: "테스트 결과", path: "/security", icon: <Shield size={18} /> },
+    // { label: "보안 리포트", path: "/testing", icon: <Bug size={18} /> },
+    // { label: "서비스", path: "/service", icon: <Package size={18} /> },
+    // { label: "설정", path: "/settings", icon: <Settings size={18} /> },
+
+    const title = pageNames[location.pathname] || "페이지";
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -33,7 +52,7 @@ const Header = () => {
     return (
         <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
             {/* 대시보드 타이틀 */}
-            <h1 className="text-2xl font-bold text-gray-800">대시보드</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
 
             {/* 오른쪽 아이콘 영역 */}
             <div className="relative flex items-center gap-4">
