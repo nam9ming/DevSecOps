@@ -87,7 +87,7 @@ export default function AuthProvider({ children }) {
     };
 
     // ✅ 인증 여부: token || user 하나만 있어도 true
-    const isAuthenticated = useMemo(() => Boolean(accessToken || user), [accessToken, user]);
+    const isAuthenticated = useMemo(() => Boolean(accessToken), [accessToken]);
 
     const value = {
         user,
