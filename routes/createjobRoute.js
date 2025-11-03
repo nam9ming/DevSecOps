@@ -29,12 +29,12 @@ function mapNetworkError(err) {
     if (!err || err.response) return null;
     const c = err.code || "";
     if (c === "ECONNREFUSED" || c === "ENOTFOUND") {
-        return { status: 503, body: { error: "Jenkins에 연결할 수 없습니다", code: "JENKINS_UNREACHABLE" } };
+        return { status: 503, body: { error: "에러: Jenkins에 연결할 수 없습니다", code: "JENKINS_UNREACHABLE" } };
     }
     if (c === "ETIMEDOUT" || c === "ECONNABORTED") {
-        return { status: 504, body: { error: "Jenkins 응답 타임아웃", code: "JENKINS_TIMEOUT" } };
+        return { status: 504, body: { error: "에러: Jenkins 응답 타임아웃", code: "JENKINS_TIMEOUT" } };
     }
-    return { status: 503, body: { error: "네트워크 오류", code: "NETWORK_ERROR" } };
+    return { status: 503, body: { error: "에러: Jenkins URL 또는 Jenkins API Token을 확인하세요", code: "NETWORK_ERROR" } };
 }
 
 /** Jenkins “이미 존재” 에러 탐지 */

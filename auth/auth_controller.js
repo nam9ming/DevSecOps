@@ -108,13 +108,13 @@ router.post("/logout", authenticateToken, attachUserSetting, async (req, res) =>
     console.log("Logout request received");
     console.log(req.cookies);
     const { refreshToken } = req.cookies || {};
-    // if (refreshToken) {
-    //     console.lo
-    //     db.get("refreshTokens")
-    //         .remove((t) => t === refreshToken)
-    //         .write();
-    // }
-    // res.clearCookie("refreshToken");
+    if (refreshToken) {
+        console.lo
+        db.get("refreshTokens")
+            .remove((t) => t === refreshToken)
+            .write();
+    }
+    res.clearCookie("refreshToken");
     res.sendStatus(204);
 });
 

@@ -111,7 +111,7 @@ router.get("/jobcatalog", authenticateToken, attachUserSetting, async (req, res)
         res.json(Object.values(serviceMap));
     } catch (err) {
         console.error("💥 Jenkins 연동 오류:", err.message);
-        res.status(500).json({ error: "Jenkins에서 Job 정보를 가져오지 못했습니다." });
+        res.status(500).json({ error: "에러: Jenkins에서 Job 정보를 가져오지 못했습니다." });
     }
 });
 
@@ -154,7 +154,7 @@ router.delete("/jobcatalog/:name", authenticateToken, attachUserSetting,async (r
         }
 
         const status = err.response?.status;
-        const msg = status === 403 ? "권한이 없습니다(403). Jenkins 권한/crumb 설정을 확인하세요." : status === 404 ? "대상 잡을 찾지 못했습니다(404)." : "삭제 중 오류가 발생했습니다.";
+        const msg = status === 403 ? "에러: 권한이 없습니다(403). Jenkins 권한/crumb 설정을 확인하세요." : status === 404 ? "에러: 대상 잡을 찾지 못했습니다(404)." : "삭제 중 오류가 발생했습니다.";
 
         console.error("❌ 삭제 실패:", status || err.message);
         return res.status(500).json({ error: msg, code: "DELETE_FAILED", detail: status || err.message });
